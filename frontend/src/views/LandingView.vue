@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { scrollToSection } from '@/lib/scroll'
 import { PRICE_MONTHLY, PRICE_YEARLY } from '@/config'
+onMounted(() => {
+  const section = window.location.hash.slice(1)
+  if (['how', 'what', 'pricing'].includes(section)) scrollToSection(section)
+})
+
 const steps = [
   { title: 'Choose the state', text: 'Select where the notice was issued. Upload a synthetic PDF or image, or enter the details yourself.' },
   { title: 'Confirm what happened', text: 'Check the ticket number, issuing authority, and type of violation. Add your account in your own words.' },

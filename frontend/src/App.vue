@@ -5,7 +5,7 @@ import { scrollToSection } from '@/lib/scroll'
 import { BRAND, USE_MOCK } from '@/config'
 
 const route = useRoute()
-const isHome = computed(() => route.path === '/')
+const isHome = computed(() => route.name === 'home')
 </script>
 
 <template>
