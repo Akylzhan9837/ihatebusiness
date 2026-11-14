@@ -47,7 +47,7 @@ class GeminiExtractor:
 
     async def extract(self, document: Document, content: bytes) -> Extraction:
         if not self.key or not self.model:
-            raise ApiError(503, "ai_unavailable", "Ticket reading is unavailable. Enter the details manually or try again later.", retryable=True)
+            raise ApiError(503, "ai_not_configured", "Automatic reading is off on this server. You can enter the ticket details manually.")
 
         pages = pdf_pages(content) if document.media_type == "application/pdf" else 1
         encoded = b64encode(content).decode("ascii")

@@ -4,6 +4,7 @@
 import { access } from './access'
 import { ApiError, noAccessError } from './errors'
 import type { Analysis, Answers, Api, CaseData, Draft, Extraction, ExtractedField, FieldKey, PatchCase, Source } from './types'
+import { isParkNYCCase, CANONICAL_AUTHORITY, CANONICAL_CITY } from '@/lib/validate'
 import { FIELD_KEYS } from './types'
 
 interface Stored { secret: string; data: CaseData }
@@ -27,14 +28,35 @@ const SRC: Source[] = [
   { id: 'nyc-dot-parknyc', title: 'NYC DOT: paying with ParkNYC', url: 'https://www.nyc.gov/html/dot/html/motorist/parking-rates.shtml', jurisdiction: 'NYC', topic: 'ParkNYC', accessed_at: '2026-11-14', relevant_excerpt: 'Payment can be made through ParkNYC.' },
   { id: 'nyc-dof-dispute', title: 'NYC DOF: Dispute a Ticket', url: 'https://www.nyc.gov/site/finance/vehicles/dispute-a-ticket.page', jurisdiction: 'NYC', topic: 'Filing', accessed_at: '2026-11-14', relevant_excerpt: 'You can dispute a ticket online, by mail or in person.' },
 ]
+const STATE_DIRECTORY: Source = {
+  id: 'us-state-agencies', title: 'State governments — USAGov', url: 'https://www.usa.gov/state-governments',
+  jurisdiction: 'United States', topic: 'Official state agency directory', kind: 'directory',
+  accessed_at: '2026-11-15', relevant_excerpt: 'Use the directory to locate the agency on your notice.',
+}
 const REQUIRED: FieldKey[] = ['ticket_number', 'issuing_authority', 'city', 'violation_code', 'issue_date', 'issue_time', 'location', 'plate_number', 'plate_state']
 const norm = (s: string | null) => (s ?? '').replace(/[\s-]/g, '').toUpperCase()
 
 function evaluate(c: CaseData): Analysis {
   const f = c.confirmed_fields; const a: Answers = c.answers
   const base = { findings: [], missing_information: [], questions: [], next_steps: [], sources: [], draft_available: false }
-  if (f.city !== 'NYC' || f.issuing_authority !== 'NYC Department of Finance' || f.violation_code !== '38')
-    return { ...base, status: 'unsupported', summary: 'This demo covers NYC Department of Finance violation code 38 paid through ParkNYC.', next_steps: ['Check the dispute instructions from the agency on your ticket.'] }
+  if (!isParkNYCCase(f)) {
+    const source = f.jurisdiction_state === 'NY' && f.city === CANONICAL_CITY
+      && f.issuing_authority === CANONICAL_AUTHORITY && (f.ticket_type === 'camera' || f.ticket_type === 'parking')
+      ? SRC[2] : STATE_DIRECTORY
+    const missing = [
+      !f.jurisdiction_state && 'State where the ticket was issued',
+      !f.ticket_number && 'Ticket or notice number',
+      !f.issuing_authority && 'Issuing authority',
+      (!f.ticket_type || f.ticket_type === 'unknown') && 'Civil ticket type',
+      !c.circumstances && 'Your account of what happened',
+    ].filter((item): item is string => !!item)
+    if (missing.length) return {
+      ...base, status: 'needs_information', missing_information: missing, sources: [source],
+      summary: 'Add these details to prepare a factual statement.',
+    }
+    return { ...base, status: 'ready_for_draft', draft_available: true, draft_kind: 'factual',
+      summary: 'Prepare a statement using your confirmed details and your account.', sources: [source] }
+  }
   const missing = REQUIRED.filter((k) => !f[k])
   if (missing.length) return { ...base, status: 'needs_information', summary: 'Confirm the ticket details first.', missing_information: missing }
   if (a.payment_method !== 'parknyc')
@@ -70,6 +92,14 @@ function evaluate(c: CaseData): Analysis {
 
 function draftFor(c: CaseData): Draft {
   const f = c.confirmed_fields; const a = c.answers
+  if (c.analysis?.draft_kind === 'factual') {
+    return {
+      text: `To ${f.issuing_authority}:\n\nI request a review of notice ${f.ticket_number}.\n\n${c.circumstances}`,
+      attachments: [],
+      submission_steps: [{ text: 'Confirm filing instructions with the issuing authority.', url: c.analysis.sources[0].url }],
+      stale: false, updated_at: nowIso(),
+    }
+  }
   const ev = c.documents.find((d) => d.document_id === a.evidence_document_id)
   return {
     text: `To the NYC Department of Finance:\n\nI request a hearing to contest parking violation ${f.ticket_number} (code ${f.violation_code}). The ticket records ${f.issue_date} at ${f.issue_time} at ${f.location}, for plate ${f.plate_number} (${f.plate_state}).\n\nI paid through ParkNYC in zone ${a.session_zone}, session ${a.session_start?.replace('T', ' ')} to ${a.session_end?.replace('T', ' ')} local time. Please review the attached receipt.`,

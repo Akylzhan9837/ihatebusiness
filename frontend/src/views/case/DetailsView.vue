@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { getApi } from '@/api/client'
 import { FIELD_KEYS, type FieldKey } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
@@ -11,6 +11,7 @@ import { useCase } from '@/state/caseStore'
 const store = useCase()
 const router = useRouter()
 const c = store.current
+const pending = store.pending.details
 
 const INPUT: Partial<Record<FieldKey, { type: string; inputmode?: 'numeric' | 'decimal' | 'text'; maxlength?: number; placeholder?: string }>> = {
   ticket_number: { type: 'text', maxlength: 64 },
@@ -26,7 +27,7 @@ const INPUT: Partial<Record<FieldKey, { type: string; inputmode?: 'numeric' | 'd
 // Что уже подтверждено — берём его. Иначе подставляем распознанное значение (оно остаётся «непроверенным», пока пользователь не нажмёт Confirm).
 const values = reactive<Record<FieldKey, string>>(Object.fromEntries(FIELD_KEYS.map((k) => {
   const confirmed = c.value.confirmed_fields[k]
-  return [k, confirmed != null ? confirmed : normalizeExtracted(k, c.value.extraction?.fields[k]?.value ?? null)]
+  return [k, pending?.fields[k] ?? (confirmed != null ? confirmed : normalizeExtracted(k, c.value.extraction?.fields[k]?.value ?? null))]
 })) as Record<FieldKey, string>)
 const wasConfirmed = (k: FieldKey) => c.value.confirmed_fields[k] != null
 const extracted = (k: FieldKey) => c.value.extraction?.fields[k]
@@ -37,8 +38,16 @@ const hasExtraction = computed(() => !!c.value.extraction)
 const hasTicket = computed(() => c.value.documents.some((d) => d.kind === 'ticket'))
 const manualEmpty = computed(() => !hasExtraction.value)
 const warnings = computed(() => c.value.extraction?.warnings ?? [])
-const circumstances = ref(c.value.circumstances ?? '')
+const circumstances = ref(pending?.circumstances ?? c.value.circumstances ?? '')
 const usesParkNYC = computed(() => isParkNYCCase(values))
+const initial = JSON.stringify([values, circumstances.value])
+let confirmedOnServer = false
+onBeforeRouteLeave(() => {
+  if (confirmedOnServer) delete store.pending.details
+  else if (JSON.stringify([values, circumstances.value]) !== initial) {
+    store.pending.details = { fields: { ...values }, circumstances: circumstances.value }
+  }
+})
 
 function badge(k: FieldKey): '' | 'check' | 'missing' | 'confirmed' {
   if (touched[k]) return ''
@@ -79,6 +88,7 @@ async function confirm() {
       patch.issuing_authority = CANONICAL_AUTHORITY
     }
     await store.patch({ confirmed_fields: patch, circumstances: circumstances.value.trim() || null })
+    confirmedOnServer = true
     await router.push({ name: usesParkNYC.value ? 'receipt' : 'report', params: { id: store.caseId } })
   } catch (e) { error.value = e } finally { saving.value = false }
 }
@@ -88,6 +98,8 @@ async function confirm() {
   <div>
     <h1>Check the ticket details</h1>
     <p class="muted">Compare these details with your notice before continuing.</p>
+
+    <p v-if="c.draft && !c.draft.stale" class="notice info">Changes to confirmed ticket details may require a new draft.</p>
 
     <div v-if="manualEmpty && !hasTicket" class="notice info" role="status">
       You chose to enter the details yourself, so every field is empty. Fill in what is on your ticket.

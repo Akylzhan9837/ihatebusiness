@@ -11,6 +11,9 @@ import { useCase } from '@/state/caseStore'
 const store = useCase()
 const c = store.current
 const draft = computed(() => c.value.draft)
+const sourceHost = (url: string) => new URL(url).hostname
+const draftLabel = computed(() => c.value.analysis?.draft_kind === 'factual'
+  || (draft.value?.stale && !draft.value.attachments.length) ? 'Factual statement draft' : 'Dispute draft')
 const stale = computed(() => !!draft.value?.stale)
 const LIMIT = 16000
 
@@ -75,7 +78,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
 
 <template>
   <div>
-    <h1>Your draft</h1>
+    <h1>{{ draft ? draftLabel : 'Your draft' }}</h1>
 
     <div v-if="!draft" class="card">
       <h2>No draft yet</h2>
@@ -92,7 +95,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
       <p v-else class="muted">Edit the text so it is accurate and in your own words. Review the filing instructions before you submit it yourself.</p>
 
       <div class="card">
-        <label for="draft-text" class="lbl">Dispute draft</label>
+        <label for="draft-text" class="lbl">{{ draftLabel }}</label>
         <textarea id="draft-text" v-model="text" class="draft" rows="16" :readonly="stale" :aria-invalid="tooLong || empty"
           aria-describedby="draft-meta"></textarea>
         <div id="draft-meta" class="src row" style="justify-content:space-between">
@@ -127,7 +130,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         <h2>How to submit it</h2>
         <ol class="bullets">
           <li v-for="s in draft.submission_steps" :key="s.text">
-            {{ s.text }} <a v-if="safeUrl(s.url)" :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">Official resource</a>
+            {{ s.text }} <a v-if="safeUrl(s.url)" :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">Open {{ sourceHost(s.url) }}</a>
           </li>
         </ol>
         <p class="muted small">Check the official page for deadlines and options. Verify your deadline with the office named on your notice.</p>

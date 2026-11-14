@@ -62,6 +62,7 @@ export interface Question {
 export interface Source {
   id: string; title: string; url: string; jurisdiction: string; topic: string
   accessed_at: string; relevant_excerpt: string
+  kind?: 'instruction' | 'directory' | null
 }
 export interface Finding {
   id: string; title: string; explanation: string

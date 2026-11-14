@@ -7,6 +7,7 @@ import { ApiError, isNotFound, userMessage } from '@/api/errors'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import { copyText } from '@/lib/clipboard'
 import { isParkNYCCase } from '@/lib/validate'
+import { forgetIntake } from '@/state/intake'
 import { CASE_KEY, createCaseStore } from '@/state/caseStore'
 
 const props = defineProps<{ id: string }>()
@@ -51,8 +52,9 @@ function nextStep(): (typeof STEPS)[number]['name'] {
   if (!c) return 'details'
   if (c.draft) return 'draft'
   if (c.analysis) return 'report'
-  if (Object.values(c.confirmed_fields).some((v) => v !== null)) return 'receipt'
-  return 'details'
+  const fields = c.confirmed_fields
+  if (!fields.ticket_number || !fields.issuing_authority || (fields.jurisdiction_state && !fields.ticket_type)) return 'details'
+  return isParkNYCCase(fields) ? 'receipt' : 'report'
 }
 
 async function load() {
@@ -76,7 +78,7 @@ async function copyLink() {
 async function remove() {
   if (!window.confirm('Delete this case and all uploaded files? This cannot be undone.')) return
   deleting.value = true; deleteError.value = null
-  try { await (await getApi()).deleteCase(caseId); await router.push('/') }
+  try { await (await getApi()).deleteCase(caseId); forgetIntake(caseId); await router.push('/') }
   catch (e) { deleteError.value = e instanceof ApiError ? e : new ApiError('unknown', userMessage(e), 0) }
   finally { deleting.value = false }
 }

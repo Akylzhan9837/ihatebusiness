@@ -6,7 +6,8 @@
     "jurisdiction": "United States",
     "topic": "Official state agency directory",
     "accessed_at": "2026-11-15",
-    "relevant_excerpt": "Directory of state and territory governments and their agencies. Confirm filing instructions with the office named on the notice."
+    "relevant_excerpt": "Directory of state and territory governments and their agencies. Confirm filing instructions with the office named on the notice.",
+    "kind": "directory"
   },
   {
     "id": "nyc-dof-filing",
@@ -15,7 +16,8 @@
     "jurisdiction": "New York City",
     "topic": "Parking and camera hearings",
     "accessed_at": "2026-11-15",
-    "relevant_excerpt": "NYC DOF provides online, mobile, mail and in-person hearing options."
+    "relevant_excerpt": "NYC DOF provides online, mobile, mail and in-person hearing options.",
+    "kind": "instruction"
   },
   {
     "id": "nyc-dmv-tvb",
@@ -24,6 +26,7 @@
     "jurisdiction": "New York City",
     "topic": "Non-criminal moving violations referred to TVB",
     "accessed_at": "2026-11-15",
-    "relevant_excerpt": "TVB handles non-criminal moving violations. Tickets returnable to local courts follow their own instructions."
+    "relevant_excerpt": "TVB handles non-criminal moving violations. Tickets returnable to local courts follow their own instructions.",
+    "kind": "instruction"
   }
 ]

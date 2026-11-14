@@ -6,26 +6,28 @@ import { ApiError } from '@/api/errors'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import { ACCEPT_ATTR, checkFile } from '@/lib/files'
 import { STATES } from '@/lib/jurisdictions'
+import { rememberIntake, restoreIntake } from '@/state/intake'
 import { formatBytes } from '@/lib/format'
 
 const router = useRouter()
 const route = useRoute()
-const mode = ref<'upload' | 'manual'>(route.query.mode === 'manual' ? 'manual' : 'upload')
+const previous = restoreIntake()
+const mode = ref<'upload' | 'manual'>(previous?.mode ?? (route.query.mode === 'manual' ? 'manual' : 'upload'))
 watch(() => route.query.mode, (value) => { mode.value = value === 'manual' ? 'manual' : 'upload' })
-const acknowledged = ref(false)
+const acknowledged = ref(previous?.acknowledged ?? false)
 const attemptedManual = ref(false)
 const stateInput = ref<HTMLSelectElement | null>(null)
 const consentInput = ref<HTMLInputElement | null>(null)
-const state = ref("")
-const file = ref<File | null>(null)
+const state = ref(previous?.state ?? '')
+const file = ref<File | null>(previous?.file ?? null)
 const fileError = ref('')
 const dragging = ref(false)
 const stage = ref<'idle' | 'creating' | 'uploading' | 'reading'>('idle')
 const progress = ref(0)
-const error = ref<unknown>(null)
+const error = ref<unknown>(previous?.error ?? null)
 // Дело и загруженный файл переживают повторные попытки: не создаём второе дело и не грузим файл дважды.
-const caseId = ref('')
-const uploaded = ref(false)
+const caseId = ref(previous?.caseId ?? '')
+const uploaded = ref(previous?.uploaded ?? false)
 
 const busy = computed(() => stage.value !== 'idle')
 const canRead = computed(() => acknowledged.value && !!state.value && !!file.value && !busy.value)
@@ -43,10 +45,17 @@ function setFile(f: File | null) {
 const onPick = (e: Event) => { setFile((e.target as HTMLInputElement).files?.[0] ?? null); (e.target as HTMLInputElement).value = '' }
 function onDrop(e: DragEvent) {
   dragging.value = false
-  if (acknowledged.value && !busy.value && !uploaded.value) setFile(e.dataTransfer?.files?.[0] ?? null)
+  if (acknowledged.value && state.value && !busy.value && !uploaded.value) setFile(e.dataTransfer?.files?.[0] ?? null)
 }
 
-const goDetails = () => router.push({ name: 'details', params: { id: caseId.value } })
+function goDetails() {
+  rememberIntake({
+    mode: mode.value, state: state.value, acknowledged: acknowledged.value,
+    file: file.value, caseId: caseId.value, uploaded: uploaded.value,
+    error: error.value instanceof ApiError ? error.value : null,
+  })
+  return router.push({ name: 'details', params: { id: caseId.value } })
+}
 
 async function ensureCase() {
   if (!caseId.value) { stage.value = 'creating'; caseId.value = (await (await getApi()).createCase(state.value)).case_id }
@@ -127,8 +136,8 @@ onBeforeUnmount(() => { error.value = null })
 
     <ErrorNotice :error="error" retry-label="Try again" @retry="readTicket" />
     <div v-if="canContinueManually" class="notice warn">
-      Reading did not finish. Your case is saved, so you can enter the ticket details yourself.
-      <button class="btn sm secondary" type="button" style="margin-left:8px" @click="goDetails">Enter details manually</button>
+      Your case is saved. Continue with manual entry.
+      <button class="btn sm" type="button" style="margin-left:8px" @click="goDetails">Enter details manually</button>
     </div>
 
     <div v-show="mode === 'upload'" class="card">

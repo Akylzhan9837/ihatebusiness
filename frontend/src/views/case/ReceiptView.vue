@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import type { Question } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import QuestionField from '@/components/QuestionField.vue'
@@ -36,8 +36,18 @@ const isParkNyc = computed(() => values.payment_method === 'parknyc')
 const visible = computed<Question[]>(() => (isParkNyc.value ? [PAYMENT, ...PARKNYC] : [PAYMENT]))
 const { values, errors, reset, validate, toPatch } = useAnswersForm(visible)
 reset(c.value.answers)
+const pending = store.pending.receipt
+if (pending) Object.assign(values, pending.answers)
 
-const circumstances = ref(c.value.circumstances ?? '')
+const circumstances = ref(pending?.circumstances ?? c.value.circumstances ?? '')
+const initial = JSON.stringify([values, circumstances.value])
+let savedOnServer = false
+onBeforeRouteLeave(() => {
+  if (savedOnServer) delete store.pending.receipt
+  else if (JSON.stringify([values, circumstances.value]) !== initial) {
+    store.pending.receipt = { answers: { ...values }, circumstances: circumstances.value }
+  }
+})
 const LIMIT = 4000
 const circError = computed(() => (circumstances.value.length > LIMIT ? `Keep this under ${LIMIT} characters.` : ''))
 
@@ -51,6 +61,7 @@ async function next() {
   saving.value = true
   try {
     await store.patch({ answers: toPatch(), circumstances: circumstances.value.trim() || null })
+    savedOnServer = true
     await router.push({ name: 'report', params: { id: store.caseId } })
   } catch (e) { error.value = e } finally { saving.value = false }
 }

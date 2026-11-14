@@ -14,6 +14,16 @@ const store = useCase()
 const router = useRouter()
 const c = store.current
 const analysis = computed(() => c.value.analysis)
+const factual = computed(() => analysis.value?.draft_kind === 'factual')
+const sourceGroups = computed(() => {
+  const sources = analysis.value?.sources ?? []
+  const isDirectory = (source: (typeof sources)[number]) =>
+    source.kind === 'directory' || (source.kind == null && source.id === 'us-state-agencies')
+  return [
+    { title: 'Agency instructions', sources: sources.filter((source) => !isDirectory(source)) },
+    { title: 'Directories', sources: sources.filter(isDirectory) },
+  ].filter((group) => group.sources.length)
+})
 
 const running = ref(false)
 const error = ref<unknown>(null)
@@ -160,22 +170,26 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
 
       <div v-if="analysis.sources.length" class="card">
         <h2>Official sources</h2>
-        <ul class="plain sources">
-          <li v-for="s in analysis.sources" :key="s.id">
-            <a :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">{{ s.title }}</a>
-            <span class="muted small"> · {{ s.jurisdiction }} · {{ s.topic }} · checked {{ s.accessed_at }}</span>
-            <blockquote v-if="s.relevant_excerpt">{{ s.relevant_excerpt }}</blockquote>
-          </li>
-        </ul>
+        <div v-for="group in sourceGroups" :key="group.title">
+          <h3>{{ group.title }}</h3>
+          <p v-if="group.title === 'Directories'" class="muted small">Use these links to find the agency named on your notice.</p>
+          <ul class="plain sources">
+            <li v-for="s in group.sources" :key="s.id">
+              <a :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">{{ s.title }}</a>
+              <span class="muted small"> · {{ s.jurisdiction }} · {{ s.topic }} · checked {{ s.accessed_at }}</span>
+              <blockquote v-if="s.relevant_excerpt">{{ s.relevant_excerpt }}</blockquote>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <!-- offer -->
       <div v-if="analysis.status === 'ready_for_draft' && analysis.draft_available" class="card offer">
         <p class="eyebrow">Next step</p>
-        <h2>{{ analysis.draft_kind === 'factual' ? 'Factual statement draft' : 'Dispute draft' }}</h2>
+        <h2>{{ factual ? 'Factual statement draft' : 'Dispute draft' }}</h2>
         <p class="muted small">Draft preparation is free in this demo.</p>
         <ul class="plain checks">
-          <li>An editable dispute draft built from your confirmed facts</li>
+          <li>{{ factual ? 'Your confirmed details and your account of what happened' : 'An editable dispute draft and evidence checklist' }}</li>
           <li>Official resources for checking how to file</li>
           <li>Copy as text or download as PDF. You submit it yourself</li>
         </ul>

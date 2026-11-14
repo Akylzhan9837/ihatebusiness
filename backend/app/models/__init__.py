@@ -117,6 +117,7 @@ class Source(Model):
     topic: str
     accessed_at: date
     relevant_excerpt: str
+    kind: Literal["instruction", "directory"] | None = None
 
 
 class Finding(Model):
