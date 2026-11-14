@@ -13,6 +13,9 @@ const route = useRoute()
 const mode = ref<'upload' | 'manual'>(route.query.mode === 'manual' ? 'manual' : 'upload')
 watch(() => route.query.mode, (value) => { mode.value = value === 'manual' ? 'manual' : 'upload' })
 const acknowledged = ref(false)
+const attemptedManual = ref(false)
+const stateInput = ref<HTMLSelectElement | null>(null)
+const consentInput = ref<HTMLInputElement | null>(null)
 const state = ref("")
 const file = ref<File | null>(null)
 const fileError = ref('')
@@ -72,7 +75,16 @@ async function readTicket() {
 }
 
 async function manual() {
-  if (!acknowledged.value || !state.value || busy.value) return
+  if (busy.value) return
+  attemptedManual.value = true
+  if (!state.value) {
+    stateInput.value?.focus()
+    return
+  }
+  if (!acknowledged.value) {
+    consentInput.value?.focus()
+    return
+  }
   error.value = null
   try { await ensureCase(); await goDetails() } catch (e) { error.value = e } finally { stage.value = 'idle' }
 }
@@ -87,32 +99,36 @@ onBeforeUnmount(() => { error.value = null })
     <h1>Start a ticket review</h1>
     <p class="muted">Choose the state where the notice was issued, then upload the ticket or enter its details.</p>
 
+    <div class="tabs" role="group" aria-label="How to add the ticket">
+      <button class="tab" type="button" :aria-pressed="mode === 'upload'" :disabled="busy" @click="mode = 'upload'">Upload a file</button>
+      <button class="tab" type="button" :aria-pressed="mode === 'manual'" :disabled="busy" @click="mode = 'manual'">Enter manually</button>
+    </div>
+
     <div class="field">
       <label for="intake-state">Where was the ticket issued?</label>
-      <select id="intake-state" v-model="state" :disabled="busy || !!caseId">
+      <select id="intake-state" ref="stateInput" v-model="state" :disabled="busy || !!caseId"
+        :aria-invalid="attemptedManual && !state" :aria-describedby="attemptedManual && !state ? 'state-required' : undefined">
         <option value="" disabled>Select a U.S. state or DC</option>
         <option v-for="[code, name] in STATES" :key="code" :value="code">{{ name }}</option>
       </select>
+      <p v-if="attemptedManual && !state" id="state-required" class="err" role="alert">Choose the state where the ticket was issued.</p>
     </div>
 
     <div class="notice warn synth" role="note">
       <strong>Synthetic documents only.</strong>
       This is a demo. Upload only made-up tickets and receipts. Do not upload real tickets, IDs or personal documents.
       <label class="opt check ack">
-        <input v-model="acknowledged" type="checkbox" :disabled="busy" />
-        <span>I understand. I will use synthetic documents only.</span>
+        <input ref="consentInput" v-model="acknowledged" type="checkbox" :disabled="busy"
+          :aria-describedby="attemptedManual && state && !acknowledged ? 'consent-required' : undefined" />
+        <span>I understand. I will use synthetic data only.</span>
       </label>
+      <p v-if="attemptedManual && state && !acknowledged" id="consent-required" class="small" role="alert">Confirm that you will use synthetic data to continue.</p>
     </div>
 
     <ErrorNotice :error="error" retry-label="Try again" @retry="readTicket" />
     <div v-if="canContinueManually" class="notice warn">
       Reading did not finish. Your case is saved, so you can enter the ticket details yourself.
       <button class="btn sm secondary" type="button" style="margin-left:8px" @click="goDetails">Enter details manually</button>
-    </div>
-
-    <div class="tabs" role="group" aria-label="How to add the ticket">
-      <button class="tab" type="button" :aria-pressed="mode === 'upload'" :disabled="busy" @click="mode = 'upload'">Upload a file</button>
-      <button class="tab" type="button" :aria-pressed="mode === 'manual'" :disabled="busy" @click="mode = 'manual'">Enter manually</button>
     </div>
 
     <div v-show="mode === 'upload'" class="card">
@@ -143,7 +159,7 @@ onBeforeUnmount(() => { error.value = null })
     <div v-show="mode === 'manual'" class="card">
       <h2>Enter the details yourself</h2>
       <p class="muted small">No upload needed. You will type the ticket details on the next screen.</p>
-      <button class="btn secondary" type="button" :disabled="!acknowledged || !state || busy" @click="manual">Continue to manual entry</button>
+      <button class="btn" type="button" :disabled="busy" @click="manual">{{ busy ? 'Opening the form…' : 'Continue to manual entry' }}</button>
     </div>
   </section>
 </template>
