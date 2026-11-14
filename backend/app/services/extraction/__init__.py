@@ -36,7 +36,7 @@ class Extractor(Protocol):
     async def extract(self, document: Document, content: bytes) -> Extraction: ...
 
 
-class OpenAIExtractor:
+class GeminiExtractor:
     def __init__(self, key: str, model: str):
         self.key = key
         self.model = model
@@ -47,16 +47,16 @@ class OpenAIExtractor:
 
         pages = pdf_pages(content) if document.media_type == "application/pdf" else 1
         encoded = b64encode(content).decode("ascii")
-        if document.media_type == "application/pdf":
-            media = {"type": "input_file", "filename": "ticket.pdf", "detail": "high", "file_data": f"data:application/pdf;base64,{encoded}"}
-        else:
-            media = {"type": "input_image", "detail": "high", "image_url": f"data:{document.media_type};base64,{encoded}"}
-
         payload = {
-            "model": self.model, "store": False, "max_output_tokens": 3500,
-            "instructions": INSTRUCTIONS,
-            "input": [{"role": "user", "content": [media]}],
-            "text": {"format": {"type": "json_schema", "name": "ticket", "strict": True, "schema": RawTicket.model_json_schema()}},
+            "systemInstruction": {"parts": [{"text": INSTRUCTIONS}]},
+            "contents": [{"role": "user", "parts": [
+                {"inlineData": {"mimeType": document.media_type, "data": encoded}},
+            ]}],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "responseJsonSchema": RawTicket.model_json_schema(),
+                "maxOutputTokens": 8192,
+            },
         }
         raw = await self.request(payload)
         fields = {}
@@ -88,28 +88,27 @@ class OpenAIExtractor:
                 try:
                     with anyio.fail_after(25):
                         response = await client.post(
-                            "https://api.openai.com/v1/responses",
-                            headers={"Authorization": f"Bearer {self.key}"},
+                            f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
+                            headers={"x-goog-api-key": self.key},
                             json=payload,
                         )
-                    if response.status_code in {429, 500, 502, 503, 504}:
+                    if response.status_code == 429:
+                        raise ApiError(429, "ai_quota_exceeded", "Gemini quota reached. Try later or enter the details manually.", retryable=True)
+                    if response.status_code in {500, 502, 503, 504}:
                         if attempt == 0:
                             await anyio.sleep(0.5)
                             continue
                     if response.is_error:
                         break
                     data = response.json()
-                    if data.get("status") != "completed":
+                    if data.get("promptFeedback", {}).get("blockReason"):
+                        raise ApiError(422, "extraction_declined", "Enter the ticket details manually.")
+                    candidates = data.get("candidates", [])
+                    if not candidates or candidates[0].get("finishReason") != "STOP":
                         break
-                    for item in data["output"]:
-                        if item["type"] != "message":
-                            continue
-                        for part in item["content"]:
-                            if part["type"] == "refusal":
-                                raise ApiError(422, "extraction_declined", "The ticket could not be read automatically. Enter its details manually.")
-                            if part["type"] == "output_text":
-                                return RawTicket.model_validate_json(part["text"])
-                    break
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    output = "".join(part.get("text", "") for part in parts if not part.get("thought"))
+                    return RawTicket.model_validate_json(output)
                 except (httpx.TransportError, TimeoutError):
                     if attempt == 0:
                         await anyio.sleep(0.5)

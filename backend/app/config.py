@@ -21,6 +21,6 @@ class Settings:
                 if origin.strip() and origin.strip() != "*"
             ),
             demo_access=getenv("TICKETCLEAR_DEMO_ACCESS", "false").lower() == "true",
-            ai_key=getenv("OPENAI_API_KEY", "").strip(),
-            ai_model=getenv("OPENAI_MODEL", "").strip(),
+            ai_key=getenv("GEMINI_API_KEY", "").strip(),
+            ai_model=getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip(),
         )
