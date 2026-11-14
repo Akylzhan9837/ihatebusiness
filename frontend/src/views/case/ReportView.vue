@@ -6,7 +6,8 @@ import ErrorNotice from '@/components/ErrorNotice.vue'
 import QuestionField from '@/components/QuestionField.vue'
 import { useAnswersForm } from '@/composables/useAnswersForm'
 import { safeUrl } from '@/lib/clipboard'
-import { formatCents, formatStamp } from '@/lib/format'
+import { BRAND, PRICE_MONTHLY, PRICE_YEARLY } from '@/config'
+import { formatStamp } from '@/lib/format'
 import { describeFact } from '@/lib/validate'
 import { useCase } from '@/state/caseStore'
 
@@ -94,7 +95,7 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
       <!-- unsupported -->
       <div v-if="analysis.status === 'unsupported'" class="card">
         <h2>This ticket is outside what the demo supports</h2>
-        <p>The demo covers one case: NYC Department of Finance violation code 38 (failure to display) paid through ParkNYC. Other tickets, paper receipts and other codes are not reviewed.</p>
+        <p>Automatic review is currently available for one case: NYC Department of Finance violation code 38 (failure to display) paid through ParkNYC. Other road fines are saved, but not reviewed yet.</p>
         <p class="muted small">If a detail was read or typed wrongly, you can fix it and review again.</p>
         <div class="row">
           <router-link :to="{ name: 'details', params: { id: store.caseId } }" class="btn secondary">Edit ticket details</router-link>
@@ -172,8 +173,11 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
       <!-- offer -->
       <div v-if="analysis.status === 'ready_for_draft' && analysis.draft_available" class="card offer">
         <p class="eyebrow">Next step</p>
-        <h2>Dispute draft</h2>
-        <div class="price">{{ formatCents(c.offer.price_cents, c.offer.currency) }}<small> test price</small></div>
+        <h2>Dispute draft · {{ BRAND }} subscription</h2>
+        <div class="plans-inline">
+          <div class="price">${{ PRICE_MONTHLY }}<small> per month</small></div>
+          <div class="price">${{ PRICE_YEARLY }}<small> per year</small></div>
+        </div>
         <ul class="plain checks">
           <li>An editable dispute draft built from your confirmed facts</li>
           <li>List of attachments and official filing instructions</li>
@@ -189,7 +193,8 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
         <template v-else>
           <p v-if="draft?.stale" class="small warnnote">Preparing a new draft replaces the previous text. Copy anything you want to keep first.</p>
           <div class="row">
-            <button class="btn" type="button" disabled aria-describedby="pay-note">Pay {{ formatCents(c.offer.price_cents, c.offer.currency) }}</button>
+            <button class="btn" type="button" disabled aria-describedby="pay-note">Subscribe ${{ PRICE_MONTHLY }}/mo</button>
+            <button class="btn" type="button" disabled aria-describedby="pay-note">Subscribe ${{ PRICE_YEARLY }}/yr</button>
             <span class="muted small">or</span>
             <button class="btn dark" type="button" :disabled="c.offer.mode !== 'demo' || demoBusy" @click="useDemo">
               {{ demoBusy ? 'Preparing your draft…' : 'Use demo access' }}

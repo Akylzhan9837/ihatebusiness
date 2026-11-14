@@ -5,6 +5,7 @@ import { getApi } from '@/api/client'
 import type { Outcome } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import { copyText, downloadBlob, safeUrl } from '@/lib/clipboard'
+import { BRAND } from '@/config'
 import { formatStamp } from '@/lib/format'
 import { useCase } from '@/state/caseStore'
 
@@ -47,7 +48,7 @@ async function download() {
   try {
     // PDF строится из сохранённого текста: сначала сохраняем правки.
     if (!(await save())) return
-    downloadBlob(await (await getApi()).exportPdf(store.caseId), 'ticketclear-draft.pdf')
+    downloadBlob(await (await getApi()).exportPdf(store.caseId), 'ticky-draft.pdf')
   } catch (e) { exportError.value = e } finally { exporting.value = false }
 }
 
@@ -89,7 +90,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         but editing and PDF download are available only for an up-to-date draft.
         <div style="margin-top:8px"><router-link :to="{ name: 'report', params: { id: store.caseId } }" class="btn sm">Review again and prepare a new draft</router-link></div>
       </div>
-      <p v-else class="muted">Edit the text so it is accurate and in your own words. TicketClear does not submit anything. You file it yourself.</p>
+      <p v-else class="muted">Edit the text so it is accurate and in your own words. {{ BRAND }} does not submit anything. You file it yourself.</p>
 
       <div class="card">
         <label for="draft-text" class="lbl">Dispute draft</label>
@@ -130,7 +131,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
             {{ s.text }} <a v-if="safeUrl(s.url)" :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">Official NYC DOF page</a>
           </li>
         </ol>
-        <p class="muted small">Check the official page for deadlines and options. TicketClear does not calculate your personal deadline.</p>
+        <p class="muted small">Check the official page for deadlines and options. {{ BRAND }} does not calculate your personal deadline.</p>
       </div>
 
       <div class="card">

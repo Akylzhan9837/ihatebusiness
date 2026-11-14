@@ -1,4 +1,4 @@
-# TicketClear · frontend
+# Ticky · frontend
 
 Vue 3 + TypeScript + Vite. Весь английский пользовательский путь по `../docs/api-contract.md`.
 

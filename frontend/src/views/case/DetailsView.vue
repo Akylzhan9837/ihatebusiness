@@ -14,6 +14,7 @@ const c = store.current
 const INPUT: Partial<Record<FieldKey, { type: string; inputmode?: 'numeric' | 'decimal' | 'text'; maxlength?: number; placeholder?: string }>> = {
   ticket_number: { type: 'text', inputmode: 'numeric', maxlength: 10, placeholder: '10 digits' },
   violation_code: { type: 'text', inputmode: 'numeric', maxlength: 3 },
+  violation_description: { type: 'text', placeholder: 'e.g. No parking, speeding, red light' },
   issue_date: { type: 'date' },
   issue_time: { type: 'time' },
   amount: { type: 'text', inputmode: 'decimal', placeholder: '65.00' },
@@ -36,7 +37,7 @@ const hasTicket = computed(() => c.value.documents.some((d) => d.kind === 'ticke
 const manualEmpty = computed(() => !hasExtraction.value)
 const warnings = computed(() => c.value.extraction?.warnings ?? [])
 const codeNotice = computed(() => values.violation_code.trim() !== '' && values.violation_code.trim() !== '38'
-  ? 'This demo covers violation code 38 only. You can continue, but the review will say this ticket is outside the demo.' : '')
+  ? 'Automatic review is currently available for violation code 38 (parking, failure to display). You can still save and continue with other road fines, but the review may say this ticket is outside the demo.' : '')
 
 function badge(k: FieldKey): '' | 'check' | 'missing' | 'confirmed' {
   if (touched[k]) return ''

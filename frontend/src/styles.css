@@ -135,6 +135,13 @@ main.wide { max-width: none; padding: 0; }
 .plan.pro ul { border-color: #304760; color: var(--on-dark-2); } .plan li::before { content: "✓  "; }
 .plan .fine { font-size: .6875rem; color: var(--muted); margin: 0; } .plan.pro .fine { color: var(--on-dark-2); }
 .plan .btn { justify-self: start; }
+.plans { display: grid; gap: 24px; } @media (min-width: 980px) { .plans { grid-template-columns: repeat(3, 1fr); } }
+.plan .price { overflow-wrap: anywhere; }
+.tabs { display: flex; gap: 8px; margin: 0 0 16px; flex-wrap: wrap; }
+.tab { min-height: 44px; padding: 0 20px; border-radius: 10px; border: 1px solid var(--line2); background: #fff; color: var(--muted); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+.tab:disabled { opacity: .55; cursor: not-allowed; }
+.offer .plans-inline { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-bottom: 12px; }
 .cta { background: linear-gradient(47deg, #07111f 16%, #17365d 94%); color: var(--on-dark); text-align: center; padding: clamp(56px, 8vw, 88px) 0; }
 .cta h2 { font-size: clamp(2.2rem, 6vw, 3.75rem); letter-spacing: -.035em; line-height: 1.13; margin: 0 0 24px; }
 .cta p { color: var(--on-dark-2); } .cta .fine { color: var(--on-dark-3); font-size: .75rem; margin-top: 20px; }

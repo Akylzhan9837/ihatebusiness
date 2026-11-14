@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { BRAND } from '@/config'
+import { BRAND, PRICE_MONTHLY, PRICE_YEARLY, YEARLY_SAVING } from '@/config'
+import { scrollToSection } from '@/lib/scroll'
 
 const steps = [
-  { n: '01', t: 'Upload your ticket', d: 'A PDF, JPG or PNG, or type the details in. We read what is on it so you can check every field.' },
+  { n: '01', t: 'Upload or enter your ticket', d: 'Upload a PDF, JPG or PNG, or type the details in by hand. Either way, you check every field yourself.' },
   { n: '02', t: 'Review the findings', d: 'See what your ticket says, what we could verify against official sources, and what is still needed.' },
   { n: '03', t: 'Prepare your dispute', d: 'If a supported ground is found, you can get an editable draft and filing instructions. You submit it yourself.' },
 ]
@@ -36,12 +37,13 @@ const principles = [
           <div>
             <div class="pill"><span aria-hidden="true">✦</span> YOUR TICKET. YOUR OPTIONS.</div>
             <h1>Got a ticket?<br />Let's look closer.</h1>
-            <p class="lede">Understand your NYC parking ticket and prepare a clear dispute. Upload your ticket and we'll read the details, check them against official sources, and show what is still needed.</p>
+            <p class="lede">Understand your NYC road fine, whether it is for parking, speeding, a red light or something else, and prepare a clear dispute. Upload your ticket or enter its details by hand, and we'll check them against official sources and show what is still needed.</p>
             <div class="row">
               <router-link to="/new" class="btn">Check my ticket <span aria-hidden="true">↗</span></router-link>
-              <router-link :to="{ path: '/', hash: '#how' }" class="btn dark">How it works</router-link>
+              <router-link :to="{ name: 'new', query: { mode: 'manual' } }" class="btn dark">Enter details manually</router-link>
+              <a href="#how" class="btn dark" @click.prevent="scrollToSection('how')">How it works</a>
             </div>
-            <p class="fine">Free initial review · Demo: no payment is taken · Currently covers NYC violation code 38 (failure to display) paid through ParkNYC</p>
+            <p class="fine">Free initial review · Demo: no payment is taken · Parking, speeding, red-light, bus-lane and other road fines</p>
           </div>
 
           <div class="dash" role="img" aria-label="Illustrative example of a ticket review. Not a real case.">
@@ -49,7 +51,7 @@ const principles = [
             <div class="dash-body" aria-hidden="true">
               <div class="doc">
                 <div class="t1">NEW YORK CITY</div>
-                <div class="t2">PARKING VIOLATION</div>
+                <div class="t2">VIOLATION NOTICE</div>
                 <div class="note">SAMPLE · NOT A REAL TICKET</div>
                 <hr />
                 <div><div class="k">SUMMONS NO.</div><div class="v">0000000000</div></div>
@@ -68,7 +70,7 @@ const principles = [
           </div>
         </div>
         <div class="assure">
-          <b>SCOPE</b><span>NYC Department of Finance parking tickets</span><span>Clear explanations, not promises</span><span>You file the dispute yourself</span>
+          <b>SCOPE</b><span>NYC road fines: parking, speeding, red light and more</span><span>Clear explanations, not promises</span><span>You file the dispute yourself</span>
         </div>
       </div>
     </section>
@@ -97,7 +99,7 @@ const principles = [
             <div class="demo-doc" aria-hidden="true">
               <div class="lbl">SAMPLE TICKET</div>
               <div class="doc">
-                <div class="t1">NEW YORK CITY</div><div class="t2">PARKING VIOLATION</div><div class="note">SAMPLE · NOT A REAL TICKET</div><hr />
+                <div class="t1">NEW YORK CITY</div><div class="t2">VIOLATION NOTICE</div><div class="note">SAMPLE · NOT A REAL TICKET</div><hr />
                 <div><div class="k">SUMMONS NO.</div><div class="v">0000000000</div></div>
                 <div><div class="k">DATE / TIME</div><div class="v">Mar 4, 2026 · 9:15 AM</div></div>
                 <div><div class="k">LOCATION</div><div class="v">Example St near 1st Ave</div></div>
@@ -158,21 +160,29 @@ const principles = [
       <div class="lp-wrap">
         <p class="eyebrow">05 / Simple, upfront pricing</p>
         <h2 class="lp-h2">Start with clarity.<br />Only pay for the next step.</h2>
-        <p class="lp-lead">See your initial review for free. Decide what to do from there.</p>
-        <div class="cols2">
+        <p class="lp-lead">See your initial review for free. Then choose monthly or yearly if you want a dispute draft.</p>
+        <div class="plans">
           <div class="plan">
             <div class="tag">START HERE</div><h3>Initial review</h3>
             <div class="price">$0<small>free</small></div>
             <p class="muted small" style="margin:0">Know what you're looking at before you decide anything.</p>
-            <ul><li>Ticket upload and detail extraction</li><li>Initial review</li><li>Issues to review, clearly explained</li><li>No card required</li></ul>
+            <ul><li>Ticket upload or manual entry</li><li>Initial review</li><li>Issues to review, clearly explained</li><li>No card required</li></ul>
             <router-link to="/new" class="btn dark">Check my ticket <span aria-hidden="true">↗</span></router-link>
             <p class="fine">No commitment to purchase.</p>
           </div>
+          <div class="plan">
+            <div class="tag">MONTHLY</div><h3>{{ BRAND }} Monthly</h3>
+            <div class="price">${{ PRICE_MONTHLY }}<small>per month</small></div>
+            <p class="muted small" style="margin:0">Pay month by month. Editable drafts that you submit yourself.</p>
+            <ul><li>Everything in the free review</li><li>Editable dispute drafts</li><li>List of attachments</li><li>Filing instructions</li></ul>
+            <router-link to="/new" class="btn dark">Start with a free review <span aria-hidden="true">↗</span></router-link>
+            <p class="fine">Demo access — no payment charged. No guarantee of dismissal.</p>
+          </div>
           <div class="plan pro">
-            <div class="tag">IF A SUPPORTED GROUND IS FOUND</div><h3>Dispute draft</h3>
-            <div class="price">$19<small>test price</small></div>
-            <p class="small" style="margin:0;color:var(--on-dark-2)">An editable draft that you submit yourself.</p>
-            <ul><li>Everything in the free review</li><li>Editable dispute draft</li><li>List of attachments</li><li>Filing instructions</li></ul>
+            <div class="tag">BEST VALUE · SAVE ${{ YEARLY_SAVING }} A YEAR</div><h3>{{ BRAND }} Yearly</h3>
+            <div class="price">${{ PRICE_YEARLY }}<small>per year</small></div>
+            <p class="small" style="margin:0;color:var(--on-dark-2)">The full year for less than twelve monthly payments.</p>
+            <ul><li>Everything in Monthly</li><li>Editable dispute drafts</li><li>List of attachments</li><li>Filing instructions</li></ul>
             <router-link to="/new" class="btn">Start with a free review <span aria-hidden="true">↗</span></router-link>
             <p class="fine">Demo access — no payment charged. Does not include automatic filing or any guarantee of dismissal.</p>
           </div>
@@ -188,7 +198,7 @@ const principles = [
         <h2>Don't just pay it.<br />Understand your options.</h2>
         <p>One upload. A clearer picture of what comes next.</p>
         <router-link to="/new" class="btn">Check my ticket <span aria-hidden="true">↗</span></router-link>
-        <p class="fine">PDF, JPG or PNG · Free initial review · Synthetic documents only</p>
+        <p class="fine">PDF, JPG or PNG, or enter it by hand · Free initial review · Synthetic documents only</p>
       </div>
     </section>
   </div>

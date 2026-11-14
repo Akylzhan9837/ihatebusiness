@@ -22,6 +22,6 @@ export const router = createRouter({
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
-  // Якоря лендинга (#how, #pricing) скроллят к секции, остальные переходы — наверх.
-  scrollBehavior: (to) => (to.hash ? { el: to.hash, top: 72 } : { top: 0 }),
+  // Якоря лендинга (#how, #pricing) плавно скроллят к секции, остальные переходы — наверх.
+  scrollBehavior: (to) => (to.hash ? { el: to.hash, top: 72, behavior: 'smooth' } : { top: 0 }),
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getApi } from '@/api/client'
 import { ApiError } from '@/api/errors'
 import ErrorNotice from '@/components/ErrorNotice.vue'
@@ -8,6 +8,8 @@ import { ACCEPT_ATTR, checkFile } from '@/lib/files'
 import { formatBytes } from '@/lib/format'
 
 const router = useRouter()
+const route = useRoute()
+const mode = ref<'upload' | 'manual'>(route.query.mode === 'manual' ? 'manual' : 'upload')
 const acknowledged = ref(false)
 const file = ref<File | null>(null)
 const fileError = ref('')
@@ -80,7 +82,7 @@ onBeforeUnmount(() => { error.value = null })
 <template>
   <section>
     <h1>Check your ticket</h1>
-    <p class="muted">Step 1 of 4 · Upload the ticket or enter its details yourself.</p>
+    <p class="muted">Step 1 of 4 · Upload the ticket or enter its details by hand. Parking, speeding, red-light and other road fines are welcome.</p>
 
     <div class="notice warn synth" role="note">
       <strong>Synthetic documents only.</strong>
@@ -97,7 +99,12 @@ onBeforeUnmount(() => { error.value = null })
       <button class="btn sm secondary" type="button" style="margin-left:8px" @click="goDetails">Enter details manually</button>
     </div>
 
-    <div class="card">
+    <div class="tabs" role="tablist" aria-label="How do you want to add your ticket?">
+      <button id="tab-upload" class="tab" type="button" role="tab" :aria-selected="mode === 'upload'" aria-controls="panel-upload" :disabled="busy" @click="mode = 'upload'">Upload a file</button>
+      <button id="tab-manual" class="tab" type="button" role="tab" :aria-selected="mode === 'manual'" aria-controls="panel-manual" :disabled="busy" @click="mode = 'manual'">Enter manually</button>
+    </div>
+
+    <div v-show="mode === 'upload'" id="panel-upload" class="card" role="tabpanel" aria-labelledby="tab-upload">
       <h2>Upload a ticket</h2>
       <div class="drop" :class="{ over: dragging, off: !acknowledged }" @dragover.prevent="dragging = acknowledged"
         @dragleave="dragging = false" @drop.prevent="onDrop">
@@ -122,10 +129,11 @@ onBeforeUnmount(() => { error.value = null })
       <p class="muted small" style="margin:12px 0 0">Only the ticket is sent for automatic reading. You will confirm every detail before anything is used.</p>
     </div>
 
-    <div class="card">
-      <h2>Or enter the details yourself</h2>
-      <p class="muted small">No upload needed. You will type the ticket details on the next screen.</p>
-      <button class="btn secondary" type="button" :disabled="!acknowledged || busy" @click="manual">Enter details manually</button>
+    <div v-show="mode === 'manual'" id="panel-manual" class="card" role="tabpanel" aria-labelledby="tab-manual">
+      <h2>Enter the details yourself</h2>
+      <p class="muted small">No file needed. On the next screen you will type the ticket number, date, time, location, plate and fine amount for any kind of road fine, such as parking, speeding or a red light.</p>
+      <p v-if="!acknowledged" class="muted small">Confirm the notice above to continue.</p>
+      <button class="btn" type="button" :disabled="!acknowledged || busy" @click="manual">Continue to manual entry</button>
     </div>
   </section>
 </template>

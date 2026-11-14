@@ -32,6 +32,10 @@ const PARKNYC: Question[] = [
 ]
 
 // Видимые вопросы: при ParkNYC добавляем детали сессии; validate/toPatch работают только по ним.
+const isParkingTicket = computed(() => {
+  const code = c.value.confirmed_fields.violation_code?.trim()
+  return !code || code === '38'
+})
 const isParkNyc = computed(() => values.payment_method === 'parknyc')
 const visible = computed<Question[]>(() => (isParkNyc.value ? [PAYMENT, ...PARKNYC] : [PAYMENT]))
 const { values, errors, reset, validate, toPatch } = useAnswersForm(visible)
@@ -59,9 +63,14 @@ async function next() {
 <template>
   <div>
     <h1>How did you pay for parking?</h1>
-    <p class="muted">Step 3 of 4 · This demo checks tickets paid through ParkNYC. You type the receipt details; we do not read the receipt for you.</p>
+    <p class="muted">Step 3 of 4 · For parking tickets only. This demo checks tickets paid through ParkNYC. You type the receipt details; we do not read the receipt for you.</p>
 
     <ErrorNotice :error="error" />
+
+    <div v-if="!isParkingTicket" class="notice info" role="status">
+      This step is about paying for parking. If your ticket is for something else, such as speeding or a red light, you can skip it.
+      <router-link :to="{ name: 'report', params: { id: store.caseId } }" class="btn sm secondary" style="margin-left:8px">Skip to review</router-link>
+    </div>
 
     <form class="card" novalidate @submit.prevent="next">
       <QuestionField v-for="q in visible" :key="q.id" :question="q" :model-value="values[q.id] ?? null" :error="errors[q.id]"
