@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { getApi } from '@/api/client'
 import { FIELD_KEYS, type FieldKey } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
-import { CANONICAL_AUTHORITY, CANONICAL_CITY, FIELD_LABELS, REQUIRED_FIELDS, normalizeExtracted, validateField } from '@/lib/validate'
+import { CANONICAL_AUTHORITY, CANONICAL_CITY, isParkNYCCase, FIELD_LABELS, REQUIRED_FIELDS, normalizeExtracted, validateField } from '@/lib/validate'
 import { STATES } from '@/lib/jurisdictions'
 import { useCase } from '@/state/caseStore'
 
@@ -37,10 +37,7 @@ const hasTicket = computed(() => c.value.documents.some((d) => d.kind === 'ticke
 const manualEmpty = computed(() => !hasExtraction.value)
 const warnings = computed(() => c.value.extraction?.warnings ?? [])
 const circumstances = ref(c.value.circumstances ?? '')
-const usesParkNYC = computed(() => values.jurisdiction_state === 'NY' && values.ticket_type === 'parking'
-  && /^0*38$/.test(values.violation_code.trim())
-  && normalizeExtracted('city', values.city) === CANONICAL_CITY
-  && normalizeExtracted('issuing_authority', values.issuing_authority) === CANONICAL_AUTHORITY)
+const usesParkNYC = computed(() => isParkNYCCase(values))
 
 function badge(k: FieldKey): '' | 'check' | 'missing' | 'confirmed' {
   if (touched[k]) return ''
@@ -89,7 +86,7 @@ async function confirm() {
 <template>
   <div>
     <h1>Check the ticket details</h1>
-    <p class="muted">Step 2 of 4 · Compare each field with your ticket. Nothing is used until you confirm it.</p>
+    <p class="muted">Compare these details with your notice before continuing.</p>
 
     <div v-if="manualEmpty && !hasTicket" class="notice info" role="status">
       You chose to enter the details yourself, so every field is empty. Fill in what is on your ticket.

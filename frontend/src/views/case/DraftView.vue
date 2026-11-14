@@ -79,7 +79,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
 
     <div v-if="!draft" class="card">
       <h2>No draft yet</h2>
-      <p class="muted">A draft is prepared after the review finds a supported ground and you choose demo access.</p>
+      <p class="muted">Finish your ticket review and choose demo access to prepare a draft.</p>
       <router-link :to="{ name: 'report', params: { id: store.caseId } }" class="btn">Go to your review</router-link>
     </div>
 
@@ -89,7 +89,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         but editing and PDF download are available only for an up-to-date draft.
         <div style="margin-top:8px"><router-link :to="{ name: 'report', params: { id: store.caseId } }" class="btn sm">Review again and prepare a new draft</router-link></div>
       </div>
-      <p v-else class="muted">Edit the text so it is accurate and in your own words. TicketClear does not submit anything. You file it yourself.</p>
+      <p v-else class="muted">Edit the text so it is accurate and in your own words. Review the filing instructions before you submit it yourself.</p>
 
       <div class="card">
         <label for="draft-text" class="lbl">Dispute draft</label>
@@ -120,7 +120,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         <h2>Attach to your filing</h2>
         <ul v-if="draft.attachments.length" class="plain bullets"><li v-for="a in draft.attachments" :key="a.document_id">{{ a.filename }}</li></ul>
         <p v-else class="muted">No attachments are listed.</p>
-        <p class="muted small">The PDF contains only the text and this list. Attach the receipt file yourself when you file.</p>
+        <p class="muted small">The PDF contains only the text and this list. Attach any supporting documents separately if the filing instructions call for them.</p>
       </div>
 
       <div class="card">
@@ -130,7 +130,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
             {{ s.text }} <a v-if="safeUrl(s.url)" :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">Official NYC DOF page</a>
           </li>
         </ol>
-        <p class="muted small">Check the official page for deadlines and options. TicketClear does not calculate your personal deadline.</p>
+        <p class="muted small">Check the official page for deadlines and options. Verify your deadline with the office named on your notice.</p>
       </div>
 
       <div class="card">

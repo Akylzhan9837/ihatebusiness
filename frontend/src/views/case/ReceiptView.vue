@@ -59,7 +59,7 @@ async function next() {
 <template>
   <div>
     <h1>How did you pay for parking?</h1>
-    <p class="muted">Step 3 of 4 · This demo checks tickets paid through ParkNYC. You type the receipt details; we do not read the receipt for you.</p>
+    <p class="muted">Enter the details from your ParkNYC receipt so Ticky can compare the session with your ticket.</p>
 
     <ErrorNotice :error="error" />
 

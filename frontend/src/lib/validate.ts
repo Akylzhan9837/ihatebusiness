@@ -29,6 +29,16 @@ export function normalizeExtracted(key: FieldKey, value: string | null): string 
   return v
 }
 
+export function isParkNYCCase(fields: Partial<CaseData['confirmed_fields']>): boolean {
+  const code = fields.violation_code?.trim() ?? ''
+  const jurisdictionMatches = fields.jurisdiction_state === 'NY' && fields.ticket_type === 'parking'
+  const legacyCase = !fields.jurisdiction_state && !fields.ticket_type
+  return (jurisdictionMatches || legacyCase)
+    && /^0*38$/.test(code)
+    && normalizeExtracted('city', fields.city ?? null) === CANONICAL_CITY
+    && normalizeExtracted('issuing_authority', fields.issuing_authority ?? null) === CANONICAL_AUTHORITY
+}
+
 const RX = {
   date: /^\d{4}-\d{2}-\d{2}$/, time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
   amount: /^\d{1,6}(?:\.\d{1,2})?$/, plate: /^[A-Za-z0-9 -]{1,12}$/, state: /^[A-Za-z]{2}$/,

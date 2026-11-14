@@ -1,4 +1,4 @@
-"""PDF export for a user-reviewed TicketClear draft."""
+"""PDF export for a user-reviewed Ticky draft."""
 from io import BytesIO
 from xml.sax.saxutils import escape
 
@@ -18,7 +18,7 @@ def render_pdf(draft: Draft) -> bytes:
     doc = SimpleDocTemplate(
         buffer, pagesize=letter, rightMargin=0.72 * inch, leftMargin=0.72 * inch,
         topMargin=0.68 * inch, bottomMargin=0.68 * inch,
-        title="TicketClear — Draft for Review", author="TicketClear",
+        title="Ticky — Draft for Review", author="Ticky",
     )
     base = getSampleStyleSheet()
     title = ParagraphStyle("TC_Title", parent=base["Title"], fontName="Helvetica-Bold", fontSize=17, leading=21, alignment=TA_LEFT, textColor=colors.HexColor("#172554"), spaceAfter=8)
@@ -27,7 +27,7 @@ def render_pdf(draft: Draft) -> bytes:
     heading = ParagraphStyle("TC_Heading", parent=base["Heading2"], fontSize=11, leading=14, textColor=colors.HexColor("#1e3a8a"), spaceBefore=9, spaceAfter=5)
 
     story = [
-        Paragraph("TicketClear — Draft for Review", title),
+        Paragraph("Ticky — Draft for Review", title),
         Paragraph("IMPORTANT: Review every statement for accuracy. This document is a draft only; it is not legal advice and has not been submitted.", small),
         Spacer(1, 10),
         Paragraph("Statement", heading),
@@ -61,6 +61,6 @@ def render_pdf(draft: Draft) -> bytes:
             Paragraph(f'<link href="{escape(step.url)}" color="#1d4ed8">{escape(step.url)}</link>', small),
         ]))
     story.append(Spacer(1, 8))
-    story.append(Paragraph("Prepared by TicketClear for user review. Verify the current instructions and deadline with NYC Department of Finance.", small))
+    story.append(Paragraph("Prepared by Ticky for user review. Verify the current instructions and deadline with the agency or court named on your notice.", small))
     doc.build(story)
     return buffer.getvalue()

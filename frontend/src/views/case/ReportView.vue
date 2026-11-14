@@ -64,9 +64,9 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
 <template>
   <div>
     <h1>Your review</h1>
-    <p class="muted">Step 4 of 4 · Based on the details you confirmed and typed. It is information, not legal advice.</p>
+    <p class="muted">Review the result and check the official resources before preparing your statement.</p>
 
-    <p v-if="running" class="row" role="status"><span class="spinner" aria-hidden="true"></span>Reviewing your ticket against official sources…</p>
+    <p v-if="running" class="row" role="status"><span class="spinner" aria-hidden="true"></span>Preparing your ticket review…</p>
 
     <div v-else-if="error && !analysis" class="card">
       <h2>We couldn't complete the review</h2>
@@ -150,7 +150,7 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
             </template>
           </p>
         </article>
-        <p class="muted small">These details were entered or confirmed by you. The check compares them with each other and cannot verify them against the original documents, so please re-read your ticket and receipt yourself.</p>
+        <p class="muted small">Compare the confirmed details with your original notice and any supporting documents.</p>
       </div>
 
       <div v-if="analysis.next_steps.length" class="card">
@@ -189,8 +189,6 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
         <template v-else>
           <p v-if="draft?.stale" class="small warnnote">Preparing a new draft replaces the previous text. Copy anything you want to keep first.</p>
           <div class="row">
-            <button class="btn" type="button" disabled aria-describedby="pay-note">Pay {{ formatCents(c.offer.price_cents, c.offer.currency) }}</button>
-            <span class="muted small">or</span>
             <button class="btn dark" type="button" :disabled="c.offer.mode !== 'demo' || demoBusy" @click="useDemo">
               {{ demoBusy ? 'Preparing your draft…' : 'Use demo access' }}
             </button>

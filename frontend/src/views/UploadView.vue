@@ -81,8 +81,8 @@ onBeforeUnmount(() => { error.value = null })
 
 <template>
   <section>
-    <h1>Check your ticket</h1>
-    <p class="muted">Step 1 of 4 · Upload the ticket or enter its details yourself.</p>
+    <h1>Start a ticket review</h1>
+    <p class="muted">Choose the state where the notice was issued, then upload the ticket or enter its details.</p>
 
     <div class="field">
       <label for="intake-state">Where was the ticket issued?</label>

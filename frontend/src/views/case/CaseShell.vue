@@ -6,6 +6,7 @@ import { access, privateLink } from '@/api/access'
 import { ApiError, isNotFound, userMessage } from '@/api/errors'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import { copyText } from '@/lib/clipboard'
+import { isParkNYCCase } from '@/lib/validate'
 import { CASE_KEY, createCaseStore } from '@/state/caseStore'
 
 const props = defineProps<{ id: string }>()
@@ -29,16 +30,18 @@ const STEPS = [
   { name: 'report', label: 'Review' },
   { name: 'draft', label: 'Draft' },
 ] as const
-const current = computed(() => STEPS.findIndex((s) => s.name === route.name))
-const done = computed<boolean[]>(() => {
-  const c = store.data.value
-  if (!c) return [false, false, false, false]
-  return [
-    Object.values(c.confirmed_fields).some((v) => v !== null),
-    c.answers.payment_method !== null,
-    c.analysis !== null,
-    c.draft !== null && !c.draft.stale,
-  ]
+const steps = computed(() => {
+  const caseData = store.data.value
+  if (!caseData) return []
+  const fields = caseData.confirmed_fields
+  const completed = {
+    details: !!fields.ticket_number && !!fields.issuing_authority,
+    receipt: caseData.answers.payment_method !== null,
+    report: caseData.analysis !== null,
+    draft: caseData.draft !== null && !caseData.draft.stale,
+  }
+  return STEPS.filter((step) => step.name !== 'receipt' || isParkNYCCase(fields) || route.name === 'receipt')
+    .map((step) => ({ ...step, done: completed[step.name] }))
 })
 // Нужна ли «ссылка недоступна» (нет ключа в этой вкладке) или «дело не найдено».
 const noAccess = computed(() => !hasKey.value || (loadError.value !== null && isNotFound(loadError.value)))
@@ -99,9 +102,9 @@ async function remove() {
     <template v-else-if="store.data.value">
       <nav class="steps" aria-label="Progress">
         <ol>
-          <li v-for="(s, i) in STEPS" v-show="s.name !== 'receipt' || !store.data.value?.confirmed_fields.ticket_type || (store.data.value.confirmed_fields.ticket_type === 'parking' && store.data.value.confirmed_fields.jurisdiction_state === 'NY' && /^0*38$/.test(store.data.value.confirmed_fields.violation_code ?? ''))" :key="s.name" :class="{ cur: i === current, done: done[i] }">
+          <li v-for="(s, i) in steps" :key="s.name" :class="{ cur: s.name === route.name, done: s.done }">
             <router-link :to="{ name: s.name, params: { id: caseId } }" :aria-current="s.name === route.name ? 'step' : undefined">
-              <span class="n" aria-hidden="true">{{ done[i] && i !== current ? '✓' : i + 1 }}</span>{{ s.label }}
+              <span class="n" aria-hidden="true">{{ s.done && s.name !== route.name ? '✓' : i + 1 }}</span>{{ s.label }}
             </router-link>
           </li>
         </ol>

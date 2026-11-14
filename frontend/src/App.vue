@@ -25,12 +25,11 @@ const isHome = computed(() => route.path === '/')
     <div class="foot-inner">
       <div>
         <div class="brand">{{ BRAND }}</div>
-        <p class="foot-tag">A clearer way to look at your NYC parking ticket.</p>
+        <p class="foot-tag">Help with civil and traffic notices.</p>
       </div>
       <p class="foot-legal">
-        {{ BRAND }} is an independent service, not a government portal and not affiliated with the NYC Department of
-        Finance. It provides information, not legal advice or attorney representation, and it can make mistakes. Preparing a
-        dispute does not guarantee a dismissal. You submit any dispute yourself. This demo accepts synthetic documents only.
+        {{ BRAND }} is independent. It helps you organize your facts and prepare a statement for your own review.
+        Filing and deadlines are your responsibility. This demo accepts synthetic documents only.
       </p>
     </div>
   </footer>
