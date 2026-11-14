@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { scrollToSection } from '@/lib/scroll'
 import { BRAND, USE_MOCK } from '@/config'
 
 const route = useRoute()
@@ -14,9 +15,9 @@ const isHome = computed(() => route.path === '/')
   <header class="nav">
     <router-link to="/" class="brand">{{ BRAND }}</router-link>
     <nav class="nav-links" aria-label="Main">
-      <router-link v-if="isHome" :to="{ path: '/', hash: '#how' }" class="nav-link">How it works</router-link>
-      <router-link v-if="isHome" :to="{ path: '/', hash: '#what' }" class="nav-link">What you get</router-link>
-      <router-link v-if="isHome" :to="{ path: '/', hash: '#pricing' }" class="nav-link">Pricing</router-link>
+      <a v-if="isHome" href="#how" class="nav-link" @click.prevent="scrollToSection('how')">How it works</a>
+      <a v-if="isHome" href="#what" class="nav-link" @click.prevent="scrollToSection('what')">What you get</a>
+      <a v-if="isHome" href="#pricing" class="nav-link" @click.prevent="scrollToSection('pricing')">Pricing</a>
       <router-link to="/new" class="btn sm">Check my ticket <span aria-hidden="true">↗</span></router-link>
     </nav>
   </header>

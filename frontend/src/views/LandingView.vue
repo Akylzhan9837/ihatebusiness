@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PRICE_MONTHLY, PRICE_YEARLY } from '@/config'
 const steps = [
   { title: 'Choose the state', text: 'Select where the notice was issued. Upload a synthetic PDF or image, or enter the details yourself.' },
   { title: 'Confirm what happened', text: 'Check the ticket number, issuing authority, and type of violation. Add your account in your own words.' },
@@ -15,7 +16,7 @@ const steps = [
           <p class="lede">Ticky helps you organize the details, find official filing resources, and put your account of what happened into a statement you can review and download.</p>
           <div class="row">
             <router-link to="/new" class="btn">Check my ticket <span aria-hidden="true">↗</span></router-link>
-            <router-link :to="{ path: '/', hash: '#how' }" class="btn dark">How it works</router-link>
+            <router-link :to="{ path: '/new', query: { mode: 'manual' } }" class="btn dark">Enter details manually</router-link>
           </div>
         </div>
         <div class="dash ticket-preview">
@@ -67,8 +68,22 @@ const steps = [
     <section id="pricing" class="lp-sec">
       <div class="lp-wrap">
         <h2 class="lp-h2">Try the demo for free</h2>
-        <p class="lp-lead">Review, draft, and PDF export are free in the demo. The $19 price shown for draft preparation is a test price. You submit the statement yourself.</p>
-        <router-link to="/new" class="btn">Start a case</router-link>
+        <p class="lp-lead">Review, draft, and PDF export are free in the demo. The subscription prices below are a preview. Billing is disabled.</p>
+        <div class="plans">
+          <div class="plan">
+            <h3>Demo access</h3>
+            <div class="price">$0</div>
+            <router-link to="/new" class="btn">Start a case</router-link>
+          </div>
+          <div class="plan">
+            <h3>Monthly subscription</h3>
+            <div class="price">${{ PRICE_MONTHLY }}<small> / month</small></div>
+          </div>
+          <div class="plan">
+            <h3>Annual subscription</h3>
+            <div class="price">${{ PRICE_YEARLY }}<small> / year</small></div>
+          </div>
+        </div>
       </div>
     </section>
   </div>

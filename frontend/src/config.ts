@@ -3,3 +3,6 @@ export const API_BASE_URL: string = (import.meta.env.VITE_API_BASE_URL ?? '').re
 export const USE_MOCK: boolean = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true'
 
 export const BRAND = 'Ticky'
+
+export const PRICE_MONTHLY = 20
+export const PRICE_YEARLY = 199

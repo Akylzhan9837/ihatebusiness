@@ -6,7 +6,7 @@ import ErrorNotice from '@/components/ErrorNotice.vue'
 import QuestionField from '@/components/QuestionField.vue'
 import { useAnswersForm } from '@/composables/useAnswersForm'
 import { safeUrl } from '@/lib/clipboard'
-import { formatCents, formatStamp } from '@/lib/format'
+import { formatStamp } from '@/lib/format'
 import { describeFact } from '@/lib/validate'
 import { useCase } from '@/state/caseStore'
 
@@ -173,7 +173,7 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
       <div v-if="analysis.status === 'ready_for_draft' && analysis.draft_available" class="card offer">
         <p class="eyebrow">Next step</p>
         <h2>{{ analysis.draft_kind === 'factual' ? 'Factual statement draft' : 'Dispute draft' }}</h2>
-        <div class="price">{{ formatCents(c.offer.price_cents, c.offer.currency) }}<small> test price</small></div>
+        <p class="muted small">Draft preparation is free in this demo.</p>
         <ul class="plain checks">
           <li>An editable dispute draft built from your confirmed facts</li>
           <li>Official resources for checking how to file</li>

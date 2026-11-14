@@ -15,6 +15,7 @@ const c = store.current
 const INPUT: Partial<Record<FieldKey, { type: string; inputmode?: 'numeric' | 'decimal' | 'text'; maxlength?: number; placeholder?: string }>> = {
   ticket_number: { type: 'text', maxlength: 64 },
   violation_code: { type: 'text', maxlength: 64 },
+  violation_description: { type: 'text', placeholder: 'e.g. No parking, speeding, red light' },
   issue_date: { type: 'date' },
   issue_time: { type: 'time' },
   amount: { type: 'text', inputmode: 'decimal', placeholder: '65.00' },

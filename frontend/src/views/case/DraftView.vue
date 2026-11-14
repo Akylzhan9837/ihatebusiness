@@ -47,7 +47,7 @@ async function download() {
   try {
     // PDF строится из сохранённого текста: сначала сохраняем правки.
     if (!(await save())) return
-    downloadBlob(await (await getApi()).exportPdf(store.caseId), 'ticketclear-draft.pdf')
+    downloadBlob(await (await getApi()).exportPdf(store.caseId), 'ticky-draft.pdf')
   } catch (e) { exportError.value = e } finally { exporting.value = false }
 }
 
@@ -127,7 +127,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         <h2>How to submit it</h2>
         <ol class="bullets">
           <li v-for="s in draft.submission_steps" :key="s.text">
-            {{ s.text }} <a v-if="safeUrl(s.url)" :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">Official NYC DOF page</a>
+            {{ s.text }} <a v-if="safeUrl(s.url)" :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">Official resource</a>
           </li>
         </ol>
         <p class="muted small">Check the official page for deadlines and options. Verify your deadline with the office named on your notice.</p>

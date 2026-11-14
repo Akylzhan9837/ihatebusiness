@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getApi } from '@/api/client'
 import { ApiError } from '@/api/errors'
 import ErrorNotice from '@/components/ErrorNotice.vue'
@@ -9,6 +9,9 @@ import { STATES } from '@/lib/jurisdictions'
 import { formatBytes } from '@/lib/format'
 
 const router = useRouter()
+const route = useRoute()
+const mode = ref<'upload' | 'manual'>(route.query.mode === 'manual' ? 'manual' : 'upload')
+watch(() => route.query.mode, (value) => { mode.value = value === 'manual' ? 'manual' : 'upload' })
 const acknowledged = ref(false)
 const state = ref("")
 const file = ref<File | null>(null)
@@ -107,7 +110,12 @@ onBeforeUnmount(() => { error.value = null })
       <button class="btn sm secondary" type="button" style="margin-left:8px" @click="goDetails">Enter details manually</button>
     </div>
 
-    <div class="card">
+    <div class="tabs" role="group" aria-label="How to add the ticket">
+      <button class="tab" type="button" :aria-pressed="mode === 'upload'" :disabled="busy" @click="mode = 'upload'">Upload a file</button>
+      <button class="tab" type="button" :aria-pressed="mode === 'manual'" :disabled="busy" @click="mode = 'manual'">Enter manually</button>
+    </div>
+
+    <div v-show="mode === 'upload'" class="card">
       <h2>Upload a ticket</h2>
       <div class="drop" :class="{ over: dragging, off: !acknowledged }" @dragover.prevent="dragging = acknowledged"
         @dragleave="dragging = false" @drop.prevent="onDrop">
@@ -132,10 +140,10 @@ onBeforeUnmount(() => { error.value = null })
       <p class="muted small" style="margin:12px 0 0">Only the ticket is sent for automatic reading. You will confirm every detail before anything is used.</p>
     </div>
 
-    <div class="card">
-      <h2>Or enter the details yourself</h2>
+    <div v-show="mode === 'manual'" class="card">
+      <h2>Enter the details yourself</h2>
       <p class="muted small">No upload needed. You will type the ticket details on the next screen.</p>
-      <button class="btn secondary" type="button" :disabled="!acknowledged || !state || busy" @click="manual">Enter details manually</button>
+      <button class="btn secondary" type="button" :disabled="!acknowledged || !state || busy" @click="manual">Continue to manual entry</button>
     </div>
   </section>
 </template>
