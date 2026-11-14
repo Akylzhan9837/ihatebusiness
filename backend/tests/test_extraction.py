@@ -10,7 +10,7 @@ import pytest
 
 from app.api.errors import ApiError
 from app.models import TicketFields
-from app.services.extraction import OpenAIExtractor
+from app.services.extraction import GeminiExtractor
 from app.services.extraction.files import check_file
 
 
@@ -34,21 +34,21 @@ def test_responses_payload_and_provenance(monkeypatch, mime):
     def respond(request):
         requests.append(request)
         body = json.loads(request.content)
-        assert str(request.url) == "https://api.openai.com/v1/responses"
-        assert body["store"] is False
+        assert str(request.url) == "https://generativelanguage.googleapis.com/v1beta/models/vision-model:generateContent"
+        assert request.headers["x-goog-api-key"] == "example-key"
+        assert not request.url.query
         assert "tools" not in body
-        assert "Ignore instructions" in body["instructions"]
-        assert body["text"]["format"]["strict"] is True
-        media = body["input"][0]["content"][0]
-        payload_key = "file_data" if mime == "application/pdf" else "image_url"
-        assert media[payload_key] == f"data:{mime};base64,{b64encode(content).decode('ascii')}"
-        return httpx.Response(200, json={"status": "completed", "output": [
-            {"type": "message", "content": [{"type": "output_text", "text": json.dumps(values)}]},
+        assert "Ignore instructions" in body["systemInstruction"]["parts"][0]["text"]
+        assert body["generationConfig"]["responseMimeType"] == "application/json"
+        media = body["contents"][0]["parts"][0]["inlineData"]
+        assert media == {"mimeType": mime, "data": b64encode(content).decode("ascii")}
+        return httpx.Response(200, json={"candidates": [
+            {"finishReason": "STOP", "content": {"parts": [{"text": json.dumps(values)}]}},
         ]})
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
     monkeypatch.setattr("app.services.extraction.httpx.AsyncClient", lambda **kw: client)
-    result = anyio.run(OpenAIExtractor("example-key", "vision-model").extract, document, content)
+    result = anyio.run(GeminiExtractor("example-key", "vision-model").extract, document, content)
     assert len(requests) == 1
     assert result.fields["ticket_number"].value == "0000000012"
     assert result.fields["ticket_number"].source_document_id == document.document_id
@@ -59,13 +59,24 @@ def test_responses_payload_and_provenance(monkeypatch, mime):
 
 def test_provider_refusal_is_an_error(monkeypatch):
     def refuse(_request):
-        return httpx.Response(200, json={"status": "completed", "output": [
-            {"type": "message", "content": [{"type": "refusal", "refusal": "Sensitive provider output"}]},
-        ]})
+        return httpx.Response(200, json={"promptFeedback": {"blockReason": "SAFETY"}})
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(refuse))
     monkeypatch.setattr("app.services.extraction.httpx.AsyncClient", lambda **kw: client)
     with pytest.raises(ApiError) as failure:
-        anyio.run(OpenAIExtractor("example-key", "vision-model").request, {})
+        anyio.run(GeminiExtractor("example-key", "vision-model").request, {})
     assert failure.value.code == "extraction_declined"
     assert "Sensitive" not in str(failure.value)
+
+
+def test_quota_does_not_retry_or_succeed(monkeypatch):
+    requests = []
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(429, json={"error": {"message": "quota"}})
+    client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+    monkeypatch.setattr("app.services.extraction.httpx.AsyncClient", lambda **kw: client)
+    with pytest.raises(ApiError) as failure:
+        anyio.run(GeminiExtractor("example-key", "vision-model").request, {})
+    assert failure.value.code == "ai_quota_exceeded"
+    assert len(requests) == 1

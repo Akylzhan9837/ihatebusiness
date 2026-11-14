@@ -15,7 +15,7 @@ from app.api.routes import make_router
 from app.api.errors import ApiError
 from app.config import Settings
 from app.models import Offer
-from app.services.extraction import OpenAIExtractor
+from app.services.extraction import GeminiExtractor
 from app.services.extraction.files import MAX_FILE_BYTES
 from app.storage import Store
 
@@ -82,7 +82,7 @@ def optional_plugin(module: str, attribute: str):
 def create_app(settings: Settings | None = None, *, extractor=None, evaluate=None, render_pdf=None):
     settings = settings or Settings.from_env()
     store = Store(settings.db, Offer(mode="demo" if settings.demo_access else "unavailable"))
-    extractor = extractor if extractor is not None else OpenAIExtractor(settings.ai_key, settings.ai_model)
+    extractor = extractor if extractor is not None else GeminiExtractor(settings.ai_key, settings.ai_model)
     evaluate = evaluate if evaluate is not None else optional_plugin("app.rules", "evaluate")
     render_pdf = render_pdf if render_pdf is not None else optional_plugin("app.export", "render_pdf")
 

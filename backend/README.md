@@ -14,8 +14,8 @@ $env:TICKETCLEAR_DEMO_ACCESS = "true"
 
 Переменные запуска:
 
-- `OPENAI_API_KEY` — секрет на сервере, задаётся в окружении или настройках хостинга.
-- `OPENAI_MODEL` — доступная аккаунту модель Responses API, поддерживающая ввод PDF/изображений и Structured Outputs.
+- `GEMINI_API_KEY` — секрет на сервере, задаётся в окружении или настройках хостинга.
+- `GEMINI_MODEL` — модель Gemini, по умолчанию gemini-3.5-flash-lite. Используйте проект Free без Billing. При исчерпании квоты возвращается 429.
 - `TICKETCLEAR_DB` — путь к SQLite на постоянном диске, по умолчанию `./data/ticketclear.sqlite3`.
 - `TICKETCLEAR_CORS_ORIGINS` — origins фронтенда через запятую. При общем origin можно оставить пустой.
 - `TICKETCLEAR_DEMO_ACCESS=true` — включить отдельный доступ к подготовке черновика без списания.
