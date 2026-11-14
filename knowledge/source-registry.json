@@ -1,0 +1,27 @@
+{
+  "scenario": "NYC DOF violation code 38 with ParkNYC payment evidence",
+  "notice": "Sources support the product's informational workflow; they do not guarantee dismissal or replace review of the user's actual ticket and current official instructions.",
+  "sources": [
+    {
+      "id": "nyc-dof-violation-codes",
+      "title": "Violation Codes, Fines, Rules & Regulations",
+      "publisher": "NYC Department of Finance",
+      "url": "https://www.nyc.gov/site/finance/vehicles/services-violation-codes.page",
+      "purpose": "Reference for the meaning of violation code 38 and applicable meter grace-period information."
+    },
+    {
+      "id": "nyc-dot-parking-rates",
+      "title": "Parking Rates",
+      "publisher": "NYC Department of Transportation",
+      "url": "https://www.nyc.gov/html/dot/html/motorist/parking-rates.shtml",
+      "purpose": "Official NYC parking and payment information, including ParkNYC context."
+    },
+    {
+      "id": "nyc-dof-dispute",
+      "title": "Dispute a Ticket",
+      "publisher": "NYC Department of Finance",
+      "url": "https://www.nyc.gov/site/finance/vehicles/dispute-a-ticket.page",
+      "purpose": "Official instructions for requesting a parking-ticket hearing."
+    }
+  ]
+}
