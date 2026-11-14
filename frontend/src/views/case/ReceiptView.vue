@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import type { Question } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
@@ -53,17 +53,36 @@ const circError = computed(() => (circumstances.value.length > LIMIT ? `Keep thi
 
 const saving = ref(false)
 const error = ref<unknown>(null)
+const form = ref<HTMLFormElement | null>(null)
+const requestError = ref<HTMLElement | null>(null)
+const invalidQuestions = computed(() => visible.value.filter((question) => !!errors[question.id]))
 
 async function next() {
+  if (saving.value) return
   error.value = null
   const ok = validate()
-  if (!ok || circError.value) return
+  if (!ok || circError.value) {
+    await nextTick()
+    const firstInvalid = form.value?.querySelector<HTMLElement>('.field.bad') ??
+      form.value?.querySelector<HTMLElement>('#circ')
+    firstInvalid?.scrollIntoView({ block: 'center' })
+    const control = firstInvalid?.matches('textarea') ? firstInvalid :
+      firstInvalid?.querySelector<HTMLElement>('input:not(:disabled)')
+    control?.focus({ preventScroll: true })
+    return
+  }
   saving.value = true
   try {
     await store.patch({ answers: toPatch(), circumstances: circumstances.value.trim() || null })
     savedOnServer = true
     await router.push({ name: 'report', params: { id: store.caseId } })
-  } catch (e) { error.value = e } finally { saving.value = false }
+  } catch (e) {
+    error.value = e
+    await nextTick()
+    requestError.value?.focus()
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -72,9 +91,9 @@ async function next() {
     <h1>How did you pay for parking?</h1>
     <p class="muted">Enter the details from your ParkNYC receipt so Ticky can compare the session with your ticket.</p>
 
-    <ErrorNotice :error="error" />
+    <div v-if="error" ref="requestError" tabindex="-1"><ErrorNotice :error="error" @retry="next" /></div>
 
-    <form class="card" novalidate @submit.prevent="next">
+    <form ref="form" class="card" novalidate :aria-busy="saving" @submit.prevent="next">
       <QuestionField v-for="q in visible" :key="q.id" :question="q" :model-value="values[q.id] ?? null" :error="errors[q.id]"
         @update:model-value="values[q.id] = $event; errors[q.id] = ''" />
 
@@ -88,6 +107,13 @@ async function next() {
         <textarea id="circ" v-model="circumstances" rows="4" :maxlength="LIMIT + 200" :aria-invalid="!!circError"></textarea>
         <div class="src">{{ circumstances.length }} / {{ LIMIT }}</div>
         <div v-if="circError" class="err" role="alert">{{ circError }}</div>
+      </div>
+
+      <div v-if="invalidQuestions.length" class="notice err" role="alert">
+        <strong>Check the highlighted fields before continuing.</strong>
+        <ul class="plain bullets">
+          <li v-for="question in invalidQuestions" :key="question.id">{{ question.prompt }} {{ errors[question.id] }}</li>
+        </ul>
       </div>
 
       <div class="row">
