@@ -9,7 +9,7 @@ import sqlite3
 from uuid import UUID, uuid4
 
 from app.api.errors import ApiError
-from app.models import Case, CaseAccess, Document, Offer
+from app.models import Case, CaseAccess, Document, JurisdictionState, Offer, TicketFields
 
 
 def now() -> datetime:
@@ -50,11 +50,14 @@ class Store:
                 );
             """)
 
-    def create(self) -> CaseAccess:
+    def create(self, jurisdiction_state: JurisdictionState | None = None) -> CaseAccess:
         case_id = uuid4()
         secret = token_urlsafe(32)
         timestamp = now()
-        case = Case(case_id=case_id, offer=self.offer, created_at=timestamp, updated_at=timestamp)
+        case = Case(
+            case_id=case_id, offer=self.offer, created_at=timestamp, updated_at=timestamp,
+            confirmed_fields=TicketFields(jurisdiction_state=jurisdiction_state),
+        )
         with self.connect() as db:
             db.execute("INSERT INTO cases (id, secret_hash, state) VALUES (?, ?, ?)",
                        (str(case_id), sha256(secret.encode()).digest(), case.model_dump_json()))

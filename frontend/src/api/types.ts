@@ -1,7 +1,7 @@
 // Типы строго по docs/api-contract.md (v1).
 
 export const FIELD_KEYS = [
-  'ticket_number', 'issuing_authority', 'city', 'violation_code', 'violation_description',
+  'jurisdiction_state', 'ticket_type', 'ticket_number', 'issuing_authority', 'city', 'violation_code', 'violation_description',
   'issue_date', 'issue_time', 'location', 'amount', 'plate_number', 'plate_state',
 ] as const
 export type FieldKey = (typeof FIELD_KEYS)[number]
@@ -77,6 +77,7 @@ export interface Analysis {
   next_steps: string[]
   sources: Source[]
   draft_available: boolean
+  draft_kind?: "factual" | null
 }
 
 export interface Attachment { document_id: string; filename: string }
@@ -115,7 +116,7 @@ export interface PatchCase {
 }
 
 export interface Api {
-  createCase(): Promise<CreatedCase>
+  createCase(state: string): Promise<CreatedCase>
   getCase(id: string): Promise<CaseData>
   uploadDocument(id: string, kind: DocumentKind, file: File, onProgress?: (percent: number) => void): Promise<DocumentInfo>
   extract(id: string): Promise<Extraction>

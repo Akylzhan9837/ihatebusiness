@@ -1,5 +1,11 @@
 # TicketClear API · v1
 
+## Расширенный приём штрафов Ticky
+
+Новые клиенты передают `jurisdiction_state` при создании дела. Доступны 50 штатов и DC. В `confirmed_fields` также появились `jurisdiction_state` и `ticket_type` (`parking`, `camera`, `moving`, `other_civil`, `unknown`). Номера уведомлений и коды нарушений — строки до 64 символов. Для сценария ParkNYC по-прежнему нужен десятизначный номер. Старые дела без этих полей сохраняют прежний маршрут.
+
+Для остальных гражданских штрафов `POST /analyze` возвращает официальные ресурсы и проверяет, есть ли ведомство, номер, подтверждённый тип и пояснение пользователя. Если данных достаточно, `draft_kind: "factual"` означает, что будет подготовлено заявление по словам пользователя. Применимые основания, сроки и возможность подачи в конкретном деле требуют отдельной проверки. Ссылки хранятся в `knowledge/citation-sources.json`.
+
 ## Сценарий и команды
 
 Один тип дела: NYC Department of Finance, violation code 38 (failure to display), с оплатой через ParkNYC. Проверяем совпадение номера и штата, зоны/места и интервала парковки с подтверждённым штрафом. Бумажные квитанции, льготный интервал и другие коды выходят за границы этого сценария. Основание для проверки — описание [кода 38 NYC DOF](https://www.nyc.gov/site/finance/vehicles/services-violation-codes.page) и [инструкция NYC DOT об оплате через ParkNYC](https://www.nyc.gov/html/dot/html/motorist/parking-rates.shtml). Для самостоятельной подачи — [NYC DOF Dispute a Ticket](https://www.nyc.gov/site/finance/vehicles/dispute-a-ticket.page). MVP не вычисляет персональный срок.

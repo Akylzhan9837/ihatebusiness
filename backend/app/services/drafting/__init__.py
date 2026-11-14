@@ -5,6 +5,8 @@ from app.storage import now
 
 
 def draft_for(case: Case) -> Draft:
+    if case.analysis is not None and case.analysis.draft_kind == "factual":
+        return factual_draft(case)
     attachment = matching_receipt(case)
     if attachment is None or case.analysis is None:
         raise ApiError(409, "draft_not_ready", "Run the case review before preparing a draft.")
@@ -36,5 +38,31 @@ def draft_for(case: Case) -> Draft:
             SubmissionStep(text="Open the NYC Department of Finance dispute page and select a hearing method.", url=submission_url),
             SubmissionStep(text="Review the draft, provide the required ticket details, and submit the draft and a copy of the ParkNYC receipt yourself.", url=submission_url),
         ],
+        updated_at=now(),
+    )
+
+
+def factual_draft(case: Case) -> Draft:
+    fields = case.confirmed_fields
+    source = case.analysis.sources[0]
+    details = [
+        ("State of issuance", fields.jurisdiction_state),
+        ("City listed on notice", fields.city),
+        ("Violation code", fields.violation_code),
+        ("Violation description", fields.violation_description),
+        ("Date listed on notice", fields.issue_date),
+        ("Time listed on notice", fields.issue_time),
+        ("Location listed on notice", fields.location),
+    ]
+    references = "\n".join(f"{label}: {value}" for label, value in details if value is not None)
+    return Draft(
+        text=(
+            f"To {fields.issuing_authority}:\n\n"
+            f"I am writing to request a review of notice {fields.ticket_number}.\n"
+            f"{references}\n\nMy statement:\n{case.circumstances}\n\n"
+            "Please let me know if further information is required for your review."
+        ),
+        attachments=[],
+        submission_steps=[SubmissionStep(text=case.analysis.next_steps[0], url=source.url)],
         updated_at=now(),
     )

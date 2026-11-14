@@ -67,7 +67,7 @@ def make_router(
 
     @router.post("/cases", response_model=CaseAccess, status_code=201)
     def create_case(body: CreateCase):
-        return store.create()
+        return store.create(body.jurisdiction_state)
 
     @router.get("/cases/{case_id}", response_model=Case)
     def get_case(access: Access):

@@ -10,7 +10,16 @@ class Model(BaseModel):
 
 
 ShortText = Annotated[str, StringConstraints(min_length=1, max_length=250)]
-TicketNumber = Annotated[str, StringConstraints(pattern=r"^\d{10}$")]
+NoticeIdentifier = Annotated[str, StringConstraints(min_length=1, max_length=64)]
+JurisdictionState = Literal[
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
+    "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
+    "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
+    "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+    "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI",
+    "WY",
+]
+TicketType = Literal["parking", "camera", "moving", "other_civil", "unknown"]
 DateText = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}$")]
 TimeText = Annotated[str, StringConstraints(pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")]
 DateTimeText = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$")]
@@ -19,10 +28,12 @@ DocumentKind = Literal["ticket", "evidence"]
 
 
 class TicketFields(Model):
-    ticket_number: TicketNumber | None = None
+    jurisdiction_state: JurisdictionState | None = None
+    ticket_type: TicketType | None = None
+    ticket_number: NoticeIdentifier | None = None
     issuing_authority: ShortText | None = None
     city: ShortText | None = None
-    violation_code: Annotated[str, StringConstraints(pattern=r"^\d{1,3}$")] | None = None
+    violation_code: NoticeIdentifier | None = None
     violation_description: ShortText | None = None
     issue_date: DateText | None = None
     issue_time: TimeText | None = None
@@ -130,6 +141,7 @@ class Analysis(Model):
     next_steps: list[str] = []
     sources: list[Source] = []
     draft_available: bool = False
+    draft_kind: Literal["factual"] | None = None
 
 
 class Attachment(Model):
@@ -176,6 +188,7 @@ class Case(Model):
 
 
 class CreateCase(Model):
+    jurisdiction_state: JurisdictionState | None = None
     synthetic_only: Literal[True]
 
 

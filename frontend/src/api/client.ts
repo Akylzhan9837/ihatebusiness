@@ -53,8 +53,8 @@ function upload(id: string, kind: string, file: File, onProgress?: (p: number) =
 }
 
 const httpApi: Api = {
-  async createCase() {
-    const c = await request<CreatedCase>('/api/cases', { method: 'POST', body: { synthetic_only: true } })
+  async createCase(state) {
+    const c = await request<CreatedCase>('/api/cases', { method: 'POST', body: { synthetic_only: true, jurisdiction_state: state } })
     access.set(c.case_id, c.access_secret)
     return c
   },

@@ -36,12 +36,12 @@ const principles = [
           <div>
             <div class="pill"><span aria-hidden="true">✦</span> YOUR TICKET. YOUR OPTIONS.</div>
             <h1>Got a ticket?<br />Let's look closer.</h1>
-            <p class="lede">Understand your NYC parking ticket and prepare a clear dispute. Upload your ticket and we'll read the details, check them against official sources, and show what is still needed.</p>
+            <p class="lede">Choose the state where your ticket was issued. Upload the notice or enter its details, find official resources, and prepare a statement based on what happened.</p>
             <div class="row">
               <router-link to="/new" class="btn">Check my ticket <span aria-hidden="true">↗</span></router-link>
               <router-link :to="{ path: '/', hash: '#how' }" class="btn dark">How it works</router-link>
             </div>
-            <p class="fine">Free initial review · Demo: no payment is taken · Currently covers NYC violation code 38 (failure to display) paid through ParkNYC</p>
+            <p class="fine">Free initial review · Demo: no payment is taken</p>
           </div>
 
           <div class="dash" role="img" aria-label="Illustrative example of a ticket review. Not a real case.">
@@ -68,7 +68,7 @@ const principles = [
           </div>
         </div>
         <div class="assure">
-          <b>SCOPE</b><span>NYC Department of Finance parking tickets</span><span>Clear explanations, not promises</span><span>You file the dispute yourself</span>
+          <b>SCOPE</b><span>U.S. civil and traffic citations</span><span>Clear explanations, not promises</span><span>You file the dispute yourself</span>
         </div>
       </div>
     </section>

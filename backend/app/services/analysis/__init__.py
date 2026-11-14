@@ -3,6 +3,7 @@ from datetime import datetime
 
 from app.api.errors import ApiError
 from app.models import Analysis, Answers, Case, Document, TicketFields
+from app.services.analysis.citations import analyze_citation
 
 
 RuleEvaluator = Callable[[TicketFields, Answers, list[Document]], Analysis]
@@ -43,9 +44,19 @@ def analyze(case: Case, evaluate: RuleEvaluator | None) -> Analysis:
     fields = case.confirmed_fields
     city = fields.city.casefold() if fields.city else None
     authority = fields.issuing_authority.casefold() if fields.issuing_authority else None
+    if fields.jurisdiction_state or fields.ticket_type:
+        parknyc = (
+            fields.jurisdiction_state == "NY" and fields.ticket_type == "parking"
+            and city in NYC_NAMES and authority in AUTHORITIES
+            and fields.violation_code is not None and fields.violation_code.lstrip("0") == "38"
+        )
+        if not parknyc:
+            return analyze_citation(case, is_nyc=city in NYC_NAMES, is_dof=authority in AUTHORITIES)
+        if not fields.ticket_number or len(fields.ticket_number) != 10 or not fields.ticket_number.isascii() or not fields.ticket_number.isdigit():
+            return Analysis(status="needs_information", summary="Enter the 10-digit NYC ticket number.", missing_information=["NYC ticket number"])
     if ((city and city not in NYC_NAMES) or
         (authority and authority not in AUTHORITIES and authority != "department of finance") or
-        (fields.violation_code and int(fields.violation_code) != 38)):
+        (fields.violation_code and fields.violation_code.lstrip("0") != "38")):
         return Analysis(
             status="unsupported",
             summary="TicketClear covers NYC Department of Finance violation code 38 with ParkNYC payment.",

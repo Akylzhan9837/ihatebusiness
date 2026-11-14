@@ -1,0 +1,29 @@
+[
+  {
+    "id": "us-state-agencies",
+    "title": "State governments — USAGov",
+    "url": "https://www.usa.gov/state-governments",
+    "jurisdiction": "United States",
+    "topic": "Official state agency directory",
+    "accessed_at": "2026-11-15",
+    "relevant_excerpt": "Directory of state and territory governments and their agencies. Confirm filing instructions with the office named on the notice."
+  },
+  {
+    "id": "nyc-dof-filing",
+    "title": "Dispute a Ticket — NYC Department of Finance",
+    "url": "https://www.nyc.gov/site/finance/vehicles/dispute-a-ticket.page",
+    "jurisdiction": "New York City",
+    "topic": "Parking and camera hearings",
+    "accessed_at": "2026-11-15",
+    "relevant_excerpt": "NYC DOF provides online, mobile, mail and in-person hearing options."
+  },
+  {
+    "id": "nyc-dmv-tvb",
+    "title": "NYC Traffic Violations Bureau — New York DMV",
+    "url": "https://dmv.ny.gov/tickets/plead-or-pay-tvb-tickets",
+    "jurisdiction": "New York City",
+    "topic": "Non-criminal moving violations referred to TVB",
+    "accessed_at": "2026-11-15",
+    "relevant_excerpt": "TVB handles non-criminal moving violations. Tickets returnable to local courts follow their own instructions."
+  }
+]

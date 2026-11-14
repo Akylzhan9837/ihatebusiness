@@ -94,7 +94,7 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
       <!-- unsupported -->
       <div v-if="analysis.status === 'unsupported'" class="card">
         <h2>This ticket is outside what the demo supports</h2>
-        <p>The demo covers one case: NYC Department of Finance violation code 38 (failure to display) paid through ParkNYC. Other tickets, paper receipts and other codes are not reviewed.</p>
+        <p>Check the jurisdiction and issuing authority shown on your notice before proceeding.</p>
         <p class="muted small">If a detail was read or typed wrongly, you can fix it and review again.</p>
         <div class="row">
           <router-link :to="{ name: 'details', params: { id: store.caseId } }" class="btn secondary">Edit ticket details</router-link>
@@ -117,7 +117,7 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
         </form>
         <div v-else class="row">
           <router-link :to="{ name: 'details', params: { id: store.caseId } }" class="btn secondary">Edit ticket details</router-link>
-          <router-link :to="{ name: 'receipt', params: { id: store.caseId } }" class="btn secondary">Edit payment details</router-link>
+          <router-link v-if="c.answers.payment_method" :to="{ name: 'receipt', params: { id: store.caseId } }" class="btn secondary">Edit payment details</router-link>
         </div>
       </div>
 
@@ -172,11 +172,11 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
       <!-- offer -->
       <div v-if="analysis.status === 'ready_for_draft' && analysis.draft_available" class="card offer">
         <p class="eyebrow">Next step</p>
-        <h2>Dispute draft</h2>
+        <h2>{{ analysis.draft_kind === 'factual' ? 'Factual statement draft' : 'Dispute draft' }}</h2>
         <div class="price">{{ formatCents(c.offer.price_cents, c.offer.currency) }}<small> test price</small></div>
         <ul class="plain checks">
           <li>An editable dispute draft built from your confirmed facts</li>
-          <li>List of attachments and official filing instructions</li>
+          <li>Official resources for checking how to file</li>
           <li>Copy as text or download as PDF. You submit it yourself</li>
         </ul>
 
@@ -205,7 +205,7 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
       <div class="row" style="margin-top:8px">
         <button class="btn secondary" type="button" :disabled="running" @click="run">Run the review again</button>
         <router-link :to="{ name: 'details', params: { id: store.caseId } }" class="btn secondary">Edit ticket details</router-link>
-        <router-link :to="{ name: 'receipt', params: { id: store.caseId } }" class="btn secondary">Edit payment details</router-link>
+        <router-link v-if="c.answers.payment_method" :to="{ name: 'receipt', params: { id: store.caseId } }" class="btn secondary">Edit payment details</router-link>
       </div>
     </template>
 

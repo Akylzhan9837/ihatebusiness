@@ -25,7 +25,7 @@ const deleteError = ref<unknown>(null)
 
 const STEPS = [
   { name: 'details', label: 'Ticket details' },
-  { name: 'receipt', label: 'Payment' },
+  { name: 'receipt', label: 'ParkNYC receipt' },
   { name: 'report', label: 'Review' },
   { name: 'draft', label: 'Draft' },
 ] as const
@@ -99,8 +99,8 @@ async function remove() {
     <template v-else-if="store.data.value">
       <nav class="steps" aria-label="Progress">
         <ol>
-          <li v-for="(s, i) in STEPS" :key="s.name" :class="{ cur: i === current, done: done[i] }">
-            <router-link :to="{ name: s.name, params: { id: caseId } }" :aria-current="i === current ? 'step' : undefined">
+          <li v-for="(s, i) in STEPS" v-show="s.name !== 'receipt' || !store.data.value?.confirmed_fields.ticket_type || (store.data.value.confirmed_fields.ticket_type === 'parking' && store.data.value.confirmed_fields.jurisdiction_state === 'NY' && /^0*38$/.test(store.data.value.confirmed_fields.violation_code ?? ''))" :key="s.name" :class="{ cur: i === current, done: done[i] }">
+            <router-link :to="{ name: s.name, params: { id: caseId } }" :aria-current="s.name === route.name ? 'step' : undefined">
               <span class="n" aria-hidden="true">{{ done[i] && i !== current ? '✓' : i + 1 }}</span>{{ s.label }}
             </router-link>
           </li>

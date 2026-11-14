@@ -5,10 +5,12 @@ import { getApi } from '@/api/client'
 import { ApiError } from '@/api/errors'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import { ACCEPT_ATTR, checkFile } from '@/lib/files'
+import { STATES } from '@/lib/jurisdictions'
 import { formatBytes } from '@/lib/format'
 
 const router = useRouter()
 const acknowledged = ref(false)
+const state = ref("")
 const file = ref<File | null>(null)
 const fileError = ref('')
 const dragging = ref(false)
@@ -20,7 +22,7 @@ const caseId = ref('')
 const uploaded = ref(false)
 
 const busy = computed(() => stage.value !== 'idle')
-const canRead = computed(() => acknowledged.value && !!file.value && !busy.value)
+const canRead = computed(() => acknowledged.value && !!state.value && !!file.value && !busy.value)
 const stageText = computed(() => ({
   idle: '', creating: 'Creating your private case…', uploading: `Uploading… ${progress.value}%`,
   reading: 'Reading the ticket. This can take up to a minute.',
@@ -41,7 +43,7 @@ function onDrop(e: DragEvent) {
 const goDetails = () => router.push({ name: 'details', params: { id: caseId.value } })
 
 async function ensureCase() {
-  if (!caseId.value) { stage.value = 'creating'; caseId.value = (await (await getApi()).createCase()).case_id }
+  if (!caseId.value) { stage.value = 'creating'; caseId.value = (await (await getApi()).createCase(state.value)).case_id }
 }
 
 async function readTicket() {
@@ -67,7 +69,7 @@ async function readTicket() {
 }
 
 async function manual() {
-  if (!acknowledged.value || busy.value) return
+  if (!acknowledged.value || !state.value || busy.value) return
   error.value = null
   try { await ensureCase(); await goDetails() } catch (e) { error.value = e } finally { stage.value = 'idle' }
 }
@@ -81,6 +83,14 @@ onBeforeUnmount(() => { error.value = null })
   <section>
     <h1>Check your ticket</h1>
     <p class="muted">Step 1 of 4 · Upload the ticket or enter its details yourself.</p>
+
+    <div class="field">
+      <label for="intake-state">Where was the ticket issued?</label>
+      <select id="intake-state" v-model="state" :disabled="busy || !!caseId">
+        <option value="" disabled>Select a U.S. state or DC</option>
+        <option v-for="[code, name] in STATES" :key="code" :value="code">{{ name }}</option>
+      </select>
+    </div>
 
     <div class="notice warn synth" role="note">
       <strong>Synthetic documents only.</strong>
@@ -103,8 +113,8 @@ onBeforeUnmount(() => { error.value = null })
         @dragleave="dragging = false" @drop.prevent="onDrop">
         <p v-if="!file" class="muted">Drop a PDF, JPG or PNG here (up to 8 MB), or choose a file.</p>
         <p v-else><strong>{{ file.name }}</strong> <span class="muted small">({{ formatBytes(file.size) }})</span></p>
-        <label class="btn secondary" :class="{ disabled: !acknowledged || busy || uploaded }" for="ticket-file">{{ file ? 'Replace file' : 'Choose file' }}</label>
-        <input id="ticket-file" class="visually-hidden" type="file" :accept="ACCEPT_ATTR" :disabled="!acknowledged || busy || uploaded" @change="onPick" />
+        <label class="btn secondary" :class="{ disabled: !acknowledged || !state || busy || uploaded }" for="ticket-file">{{ file ? 'Replace file' : 'Choose file' }}</label>
+        <input id="ticket-file" class="visually-hidden" type="file" :accept="ACCEPT_ATTR" :disabled="!acknowledged || !state || busy || uploaded" @change="onPick" />
         <button v-if="file && !uploaded" class="btn danger" type="button" :disabled="busy" style="margin-left:8px" @click="file = null">Remove</button>
         <p v-if="!acknowledged" class="muted small" style="margin:12px 0 0">Confirm the notice above to enable uploads.</p>
         <p v-if="fileError" class="notice err" role="alert" style="margin:12px 0 0">{{ fileError }}</p>
@@ -125,7 +135,7 @@ onBeforeUnmount(() => { error.value = null })
     <div class="card">
       <h2>Or enter the details yourself</h2>
       <p class="muted small">No upload needed. You will type the ticket details on the next screen.</p>
-      <button class="btn secondary" type="button" :disabled="!acknowledged || busy" @click="manual">Enter details manually</button>
+      <button class="btn secondary" type="button" :disabled="!acknowledged || !state || busy" @click="manual">Enter details manually</button>
     </div>
   </section>
 </template>

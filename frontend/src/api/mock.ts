@@ -85,6 +85,7 @@ function draftFor(c: CaseData): Draft {
 function demoExtraction(docId: string): Extraction {
   const f = (value: string | null, source_text: string | null): ExtractedField => ({ value, source_document_id: docId, page: value ? 1 : null, source_text, needs_confirmation: true })
   const v: Record<FieldKey, ExtractedField> = {
+    jurisdiction_state: f(null, null), ticket_type: f(null, null),
     ticket_number: f('0000000038', 'Summons No. 0000000038'), issuing_authority: f('NYC Department of Finance', 'Department of Finance'),
     city: f('New York', null), violation_code: f('38', 'Viol Code 38'), violation_description: f(null, null),
     issue_date: f('2026-11-02', '11/02/2026'), issue_time: f('13:30', '1:30P'), location: f('100 Example Ave', 'Ex Ave'),
@@ -97,10 +98,10 @@ const emptyFields = () => Object.fromEntries(FIELD_KEYS.map((k) => [k, null])) a
 const emptyAnswers = (): Answers => ({ payment_method: null, evidence_document_id: null, session_start: null, session_end: null, session_plate_number: null, session_plate_state: null, session_zone: null, zone_matches_ticket_location: null, receipt_details_confirmed: null })
 
 export const mockApi: Api = {
-  async createCase() {
+  async createCase(state) {
     await wait(200)
     const all = load(); const id = uuid(); const secret = btoa(uuid() + uuid()).replace(/[^A-Za-z0-9]/g, '').slice(0, 43)
-    all[id] = { secret, data: { case_id: id, documents: [], extraction: null, confirmed_fields: emptyFields(), circumstances: null, answers: emptyAnswers(), outcome: null, analysis: null, draft: null, offer: { price_cents: 1900, currency: 'USD', mode: 'demo', charge: false }, created_at: nowIso(), updated_at: nowIso() } }
+    all[id] = { secret, data: { case_id: id, documents: [], extraction: null, confirmed_fields: { ...emptyFields(), jurisdiction_state: state }, circumstances: null, answers: emptyAnswers(), outcome: null, analysis: null, draft: null, offer: { price_cents: 1900, currency: 'USD', mode: 'demo', charge: false }, created_at: nowIso(), updated_at: nowIso() } }
     save(all); access.set(id, secret)
     return { case_id: id, access_secret: secret }
   },

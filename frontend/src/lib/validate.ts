@@ -1,14 +1,15 @@
 import type { AnswerKey, AnswerValue, CaseData, FieldKey, Question } from '@/api/types'
 
 export const FIELD_LABELS: Record<FieldKey, string> = {
+  jurisdiction_state: "State of issuance", ticket_type: "Ticket type",
   ticket_number: 'Ticket (summons) number', issuing_authority: 'Issuing authority', city: 'City',
   violation_code: 'Violation code', violation_description: 'Violation description',
-  issue_date: 'Date of violation', issue_time: 'Time of violation (NYC local)', location: 'Location',
+  issue_date: 'Date of violation', issue_time: 'Time of violation (local time)', location: 'Location',
   amount: 'Fine amount (USD)', plate_number: 'Plate number', plate_state: 'Plate state',
 }
 // Обязательные для анализа поля (backend требует их до вызова правил).
 export const REQUIRED_FIELDS: FieldKey[] = [
-  'ticket_number', 'issuing_authority', 'city', 'violation_code', 'issue_date', 'issue_time', 'location', 'plate_number', 'plate_state',
+  'jurisdiction_state', 'ticket_type',
 ]
 
 export const CANONICAL_CITY = 'NYC'
@@ -29,7 +30,7 @@ export function normalizeExtracted(key: FieldKey, value: string | null): string 
 }
 
 const RX = {
-  ticket: /^\d{10}$/, code: /^\d{1,3}$/, date: /^\d{4}-\d{2}-\d{2}$/, time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
+  date: /^\d{4}-\d{2}-\d{2}$/, time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
   amount: /^\d{1,6}(?:\.\d{1,2})?$/, plate: /^[A-Za-z0-9 -]{1,12}$/, state: /^[A-Za-z]{2}$/,
   zone: /^\d{6}$/, dateTime: /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/,
 }
@@ -40,8 +41,8 @@ export function validateField(key: FieldKey, raw: string): string {
   const v = raw.trim()
   if (!v) return REQUIRED_FIELDS.includes(key) ? `${FIELD_LABELS[key]} is required.` : ''
   switch (key) {
-    case 'ticket_number': return RX.ticket.test(v) ? '' : 'Enter the 10-digit ticket number, including leading zeros.'
-    case 'violation_code': return RX.code.test(v) ? '' : 'Enter the numeric violation code, e.g. 38.'
+    case 'ticket_number':
+    case 'violation_code': return v.length <= 64 ? '' : 'Too long (max 64 characters).'
     case 'issue_date': return RX.date.test(v) && validDate(v) ? '' : 'Enter a valid date.'
     case 'issue_time': return RX.time.test(v) ? '' : 'Enter the time as HH:MM.'
     case 'amount': return RX.amount.test(v) ? '' : 'Enter an amount like 65.00.'

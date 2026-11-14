@@ -91,7 +91,7 @@ def create_app(settings: Settings | None = None, *, extractor=None, evaluate=Non
         await run_in_threadpool(store.initialize)
         yield
 
-    app = FastAPI(title="TicketClear", version="1.0.0", lifespan=lifespan, redirect_slashes=False)
+    app = FastAPI(title="Ticky", version="1.0.0", lifespan=lifespan, redirect_slashes=False)
     app.add_middleware(RequestLimits)
     if settings.origins:
         app.add_middleware(
@@ -118,7 +118,7 @@ def create_app(settings: Settings | None = None, *, extractor=None, evaluate=Non
 
     @app.exception_handler(Exception)
     async def server_error(_request: Request, _exc: Exception):
-        error = ApiError(500, "internal_error", "TicketClear could not complete this request. Try again.", retryable=True)
+        error = ApiError(500, "internal_error", "Ticky could not complete this request. Try again.", retryable=True)
         return JSONResponse(error.payload(), status_code=500, headers={"Cache-Control": "no-store"})
 
     app.include_router(make_router(store, settings, extractor, Semaphore(2), evaluate, render_pdf))
