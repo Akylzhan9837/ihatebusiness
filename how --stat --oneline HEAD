@@ -1,0 +1,17 @@
+[33mcommit be37c90e94d5a86020b5d5041745ba58e5586c19[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/rules-qa[m[33m)[m
+Author: Miras <mirasaskar96@gmail.com>
+Date:   Sun Nov 15 02:19:41 2026 +0500
+
+    Add ParkNYC rules, PDF export and QA tests
+
+ backend/app/export/__init__.py         |  66 [32m++++++++++++[m
+ backend/app/rules/__init__.py          | 177 [32m+++++++++++++++++++++++++++++++++[m
+ backend/requirements-p3.txt            |   2 [32m+[m
+ backend/tests/e2e/test_parknyc_flow.py | 122 [32m+++++++++++++++++++++++[m
+ backend/tests/test_rules_export.py     | 125 [32m+++++++++++++++++++++++[m
+ docs/participant-3-guide.md            |  93 [32m+++++++++++++++++[m
+ docs/rules-export-json-examples.md     | 104 [32m+++++++++++++++++++[m
+ fixtures/parknyc-matching-case.json    |  28 [32m++++++[m
+ fixtures/parknyc-mismatch-case.json    |  28 [32m++++++[m
+ knowledge/source-registry.json         |  27 [32m+++++[m
+ 10 files changed, 772 insertions(+)
