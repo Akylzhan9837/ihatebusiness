@@ -41,7 +41,7 @@ const principles = [
               <router-link to="/new" class="btn">Check my ticket <span aria-hidden="true">↗</span></router-link>
               <router-link :to="{ path: '/', hash: '#how' }" class="btn dark">How it works</router-link>
             </div>
-            <p class="fine">Free initial review · Demo: no payment is taken</p>
+            <p class="fine">Free initial review · Demo: no payment is taken · Currently covers NYC violation code 38 (failure to display) paid through ParkNYC</p>
           </div>
 
           <div class="dash" role="img" aria-label="Illustrative example of a ticket review. Not a real case.">

@@ -1,90 +1,128 @@
-// ПРЕДВАРИТЕЛЬНЫЕ типы. Источник истины — docs/api-contract.md; при его появлении сверить и поправить здесь.
+// Типы строго по docs/api-contract.md (v1).
 
-export type FieldKey =
-  | 'ticket_number' | 'issuing_authority' | 'city'
-  | 'violation_code' | 'violation_description'
-  | 'issue_date' | 'issue_time' | 'location'
-  | 'fine_amount' | 'license_plate' | 'plate_state'
+export const FIELD_KEYS = [
+  'ticket_number', 'issuing_authority', 'city', 'violation_code', 'violation_description',
+  'issue_date', 'issue_time', 'location', 'amount', 'plate_number', 'plate_state',
+] as const
+export type FieldKey = (typeof FIELD_KEYS)[number]
 
-export type FieldQuality = 'ok' | 'low_confidence' | 'missing'
+export type ConfirmedFields = Record<FieldKey, string | null>
+export type DocumentKind = 'ticket' | 'evidence'
+
+export interface DocumentInfo {
+  document_id: string
+  kind: DocumentKind
+  filename: string
+  media_type: 'application/pdf' | 'image/jpeg' | 'image/png'
+  size_bytes: number
+}
 
 export interface ExtractedField {
-  key: FieldKey
-  value: string | null          // даты — 'YYYY-MM-DD', время — 'HH:mm', сумма — строка '65.00' (без UTC-конвертаций)
-  quality: FieldQuality
-  source_text?: string | null
-  page?: number | null
+  value: string | null
+  source_document_id: string
+  page: number | null
+  source_text: string | null
+  needs_confirmation: true
+}
+export interface Extraction {
+  fields: Partial<Record<FieldKey, ExtractedField>>
+  warnings: string[]
 }
 
-export type AnalysisStatus =
-  | 'unsupported' | 'needs_information' | 'no_supported_ground_identified' | 'ready_for_draft'
-
-export interface OfficialSource { title: string; url: string; note?: string }
-
-export interface Finding {
-  id: string
-  title: string
-  explanation: string
-  supporting_facts: string[]
-  sources: OfficialSource[]
-  limitations: string[]
+export type PaymentMethod = 'parknyc' | 'other' | 'none' | 'unknown'
+export const ANSWER_KEYS = [
+  'payment_method', 'evidence_document_id', 'session_start', 'session_end',
+  'session_plate_number', 'session_plate_state', 'session_zone',
+  'zone_matches_ticket_location', 'receipt_details_confirmed',
+] as const
+export type AnswerKey = (typeof ANSWER_KEYS)[number]
+export interface Answers {
+  payment_method: PaymentMethod | null
+  evidence_document_id: string | null
+  session_start: string | null
+  session_end: string | null
+  session_plate_number: string | null
+  session_plate_state: string | null
+  session_zone: string | null
+  zone_matches_ticket_location: boolean | null
+  receipt_details_confirmed: boolean | null
 }
+export type AnswerValue = string | boolean | null
 
+export type Outcome = 'submitted' | 'dismissed' | 'upheld' | 'other'
+
+export type AnalysisStatus = 'unsupported' | 'needs_information' | 'no_supported_ground_identified' | 'ready_for_draft'
+export interface QuestionOption { value: string; label: string }
 export interface Question {
   id: string
-  text: string
-  kind: 'text' | 'choice' | 'evidence'
-  options?: string[]
-  required?: boolean
+  prompt: string
+  type: 'choice' | 'text' | 'datetime' | 'boolean' | 'evidence'
+  options: QuestionOption[]
 }
-
+export interface Source {
+  id: string; title: string; url: string; jurisdiction: string; topic: string
+  accessed_at: string; relevant_excerpt: string
+}
+export interface Finding {
+  id: string; title: string; explanation: string
+  supporting_fact_ids: string[]; source_ids: string[]
+  limitations: string[]; suggested_next_step: string
+}
 export interface Analysis {
   status: AnalysisStatus
-  summary?: string
-  verified: string[]
-  missing_information: string[]
+  summary: string
   findings: Finding[]
-  sources: OfficialSource[]
+  missing_information: string[]
+  questions: Question[]
   next_steps: string[]
+  sources: Source[]
   draft_available: boolean
-  unsupported_reason?: string
 }
 
+export interface Attachment { document_id: string; filename: string }
+export interface SubmissionStep { text: string; url: string }
 export interface Draft {
   text: string
-  attachments: string[]
-  submission_url?: string
-  deadline_note?: { text: string; source_url?: string } | null
-  updated_at?: string
+  attachments: Attachment[]
+  submission_steps: SubmissionStep[]
+  stale: boolean
+  updated_at: string
 }
+export interface Offer { price_cents: 1900; currency: 'USD'; mode: 'demo' | 'unavailable'; charge: false }
 
 export interface CaseData {
-  id: string
-  fields: ExtractedField[]
-  questions: Question[]
-  answers: Record<string, string>
+  case_id: string
+  documents: DocumentInfo[]
+  extraction: Extraction | null
+  confirmed_fields: ConfirmedFields
+  circumstances: string | null
+  answers: Answers
+  outcome: Outcome | null
   analysis: Analysis | null
   draft: Draft | null
+  offer: Offer
+  created_at: string
+  updated_at: string
 }
 
-export interface CreatedCase { id: string; access_secret: string }
+export interface CreatedCase { case_id: string; access_secret: string }
 
-export interface AppConfig {
-  allowed_types?: string[]       // напр. ['application/pdf','image/jpeg','image/png']
-  max_file_bytes?: number
-  sample_case_available?: boolean
+export interface PatchCase {
+  confirmed_fields?: Partial<Record<FieldKey, string | null>>
+  circumstances?: string | null
+  answers?: Partial<Answers>
+  outcome?: Outcome | null
 }
 
 export interface Api {
-  getConfig(): Promise<AppConfig>
   createCase(): Promise<CreatedCase>
-  uploadDocument(id: string, file: File): Promise<void>
-  extract(id: string): Promise<CaseData>
-  updateCase(id: string, patch: { fields?: Partial<Record<FieldKey, string | null>>; answers?: Record<string, string> }): Promise<CaseData>
-  analyze(id: string): Promise<CaseData>
-  createDraft(id: string): Promise<CaseData>
-  updateDraft(id: string, text: string): Promise<CaseData>
   getCase(id: string): Promise<CaseData>
+  uploadDocument(id: string, kind: DocumentKind, file: File, onProgress?: (percent: number) => void): Promise<DocumentInfo>
+  extract(id: string): Promise<Extraction>
+  patchCase(id: string, patch: PatchCase): Promise<CaseData>
+  analyze(id: string): Promise<Analysis>
+  createDraft(id: string): Promise<Draft>
+  patchDraft(id: string, text: string): Promise<Draft>
   exportPdf(id: string): Promise<Blob>
   deleteCase(id: string): Promise<void>
 }
