@@ -42,7 +42,7 @@ const val = (e: Event) => (e.target as HTMLInputElement).value
 
     <template v-else-if="question.type === 'datetime'">
       <span :id="`${id}-label`" class="lbl">{{ question.prompt }}</span>
-      <DateTimeField :model-value="typeof modelValue === 'string' ? modelValue : null" :input-id="id"
+      <DateTimeField :model-value="typeof modelValue === 'string' ? modelValue : null" :input-id="id" :label="question.prompt"
         :invalid="!!error" :describedby="error ? `${id}-err` : undefined"
         @update:model-value="emit('update:modelValue', $event)" />
     </template>

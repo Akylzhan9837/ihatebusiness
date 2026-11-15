@@ -4,8 +4,9 @@ import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { getApi } from '@/api/client'
 import { FIELD_KEYS, type FieldKey } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
+import UsDateField from '@/components/UsDateField.vue'
 import { CANONICAL_AUTHORITY, CANONICAL_CITY, isParkNYCCase, FIELD_LABELS, REQUIRED_FIELDS, normalizeExtracted, validateField } from '@/lib/validate'
-import { DATE_PLACEHOLDER, TIME_PLACEHOLDER, isoToUsDate, isoToUsTime, parseUsDate, parseUsTime } from '@/lib/usdate'
+import { TIME_PLACEHOLDER, isoToUsDate, isoToUsTime, parseUsDate, parseUsTime } from '@/lib/usdate'
 import { STATES } from '@/lib/jurisdictions'
 import { useCase } from '@/state/caseStore'
 
@@ -18,7 +19,6 @@ const INPUT: Partial<Record<FieldKey, { type: string; inputmode?: 'numeric' | 'd
   ticket_number: { type: 'text', maxlength: 64 },
   violation_code: { type: 'text', maxlength: 64 },
   violation_description: { type: 'text', placeholder: 'e.g. No parking, speeding, red light' },
-  issue_date: { type: 'text', maxlength: 10, placeholder: DATE_PLACEHOLDER },
   issue_time: { type: 'text', maxlength: 12, placeholder: TIME_PLACEHOLDER },
   amount: { type: 'text', inputmode: 'decimal', placeholder: '65.00' },
   plate_state: { type: 'text', maxlength: 2, placeholder: 'NY' },
@@ -167,13 +167,16 @@ async function confirm() {
           <option value="other_civil">Other civil citation</option>
           <option value="unknown">Other or unsure</option>
         </select>
+        <UsDateField v-else-if="k === 'issue_date'" :input-id="`f-${k}`" :model-value="values[k]"
+          calendar-label="Open calendar for ticket date" :required="REQUIRED_FIELDS.includes(k)" :invalid="!!errors[k]"
+          :describedby="[errors[k] ? `e-${k}` : '', extracted(k)?.source_text ? `s-${k}` : ''].filter(Boolean).join(' ') || undefined"
+          @update:model-value="values[k] = $event; touched[k] = true; errors[k] = ''" />
         <input v-else :id="`f-${k}`" v-model="values[k]" :type="INPUT[k]?.type ?? 'text'" :inputmode="INPUT[k]?.inputmode"
           :maxlength="INPUT[k]?.maxlength ?? 250" :placeholder="INPUT[k]?.placeholder" autocomplete="off"
           :list="k === 'city' ? 'dl-city' : k === 'issuing_authority' ? 'dl-auth' : undefined"
           :required="REQUIRED_FIELDS.includes(k)" :aria-invalid="!!errors[k]"
           :aria-describedby="[errors[k] ? `e-${k}` : '', extracted(k)?.source_text ? `s-${k}` : ''].filter(Boolean).join(' ') || undefined"
           @input="touched[k] = true; errors[k] = ''" />
-        <p v-if="k === 'issue_date'" class="hint">Use MM/DD/YYYY, for example 11/14/2026.</p>
         <p v-if="k === 'issue_time'" class="hint">Use the local time on the notice with AM or PM, for example 1:30 PM.</p>
         <div v-if="extracted(k)?.source_text" :id="`s-${k}`" class="src">
           From your document: “{{ extracted(k)?.source_text }}”<span v-if="extracted(k)?.page"> (page {{ extracted(k)?.page }})</span>

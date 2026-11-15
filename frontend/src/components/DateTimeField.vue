@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { DATE_EXAMPLE, DATE_PLACEHOLDER, TIME_EXAMPLE, TIME_PLACEHOLDER, joinIsoDateTime, splitIsoDateTime } from '@/lib/usdate'
+import UsDateField from './UsDateField.vue'
+import { TIME_EXAMPLE, TIME_PLACEHOLDER, joinIsoDateTime, splitIsoDateTime } from '@/lib/usdate'
 
 // Дата и время — два текстовых поля с явным американским форматом, поэтому вид не зависит от локали устройства.
 // Наружу уходит ISO 'YYYY-MM-DDTHH:MM' (местное время NYC, без UTC). Пока ввод неполный или неверный,
 // наружу уходит сырой текст 'дата|время': валидатор отдаёт по нему точную подсказку (lib/validate.ts).
-const props = defineProps<{ modelValue: string | null; inputId: string; invalid?: boolean; describedby?: string }>()
+const props = defineProps<{ modelValue: string | null; inputId: string; label: string; invalid?: boolean; describedby?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [v: string] }>()
 
 const init = splitIsoDateTime(props.modelValue)
@@ -25,14 +26,15 @@ function push() { emit('update:modelValue', joinIsoDateTime(date.value, time.val
   <div class="dt" role="group" :aria-labelledby="`${inputId}-label`">
     <div class="dt-part">
       <label :for="`${inputId}-date`" class="sub">Date</label>
-      <input :id="`${inputId}-date`" v-model="date" type="text" autocomplete="off" maxlength="10"
-        :placeholder="DATE_PLACEHOLDER" :aria-invalid="invalid" :aria-describedby="[`${inputId}-hint`, describedby].filter(Boolean).join(' ')" @input="push" />
+      <UsDateField :input-id="`${inputId}-date`" :model-value="date"
+        :calendar-label="`Open calendar · ${label}`" :invalid="invalid" :describedby="describedby"
+        @update:model-value="date = $event; push()" />
     </div>
     <div class="dt-part">
       <label :for="`${inputId}-time`" class="sub">Time</label>
       <input :id="`${inputId}-time`" v-model="time" type="text" autocomplete="off" maxlength="12"
         :placeholder="TIME_PLACEHOLDER" :aria-invalid="invalid" :aria-describedby="[`${inputId}-hint`, describedby].filter(Boolean).join(' ')" @input="push" />
     </div>
-    <p :id="`${inputId}-hint`" class="hint">Example: {{ DATE_EXAMPLE }} and {{ TIME_EXAMPLE }}.</p>
+    <p :id="`${inputId}-hint`" class="hint">Time example: {{ TIME_EXAMPLE }}.</p>
   </div>
 </template>

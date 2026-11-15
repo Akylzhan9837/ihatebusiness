@@ -229,7 +229,7 @@ code { background: var(--bg2); padding: 1px 6px; border-radius: 4px; font-size: 
 .dt { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; max-width: 420px; }
 .dt .sub { display: block; font-size: .8125rem; color: var(--muted); margin-bottom: 2px; }
 .dt .hint { grid-column: 1 / -1; margin: 0; }
-@media (max-width: 360px) { .dt { grid-template-columns: 1fr; } }
+@media (max-width: 440px) { .dt { grid-template-columns: 1fr; } }
 
 /* buttons: one group pattern, wraps cleanly on phones */
 .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: var(--s3); }
