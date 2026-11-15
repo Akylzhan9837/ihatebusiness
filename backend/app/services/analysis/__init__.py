@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.api.errors import ApiError
 from app.models import Analysis, Answers, Case, Document, TicketFields
@@ -34,7 +34,7 @@ def matching_receipt(case: Case) -> Document | None:
     ticket_plate = fields.plate_number.replace(" ", "").replace("-", "").upper()
     receipt_plate = answers.session_plate_number.replace(" ", "").replace("-", "").upper()
     if not (ticket_plate == receipt_plate and fields.plate_state.upper() == answers.session_plate_state.upper()
-            and start <= ticket_time < end):
+            and start - timedelta(minutes=5) <= ticket_time <= end + timedelta(minutes=5)):
         return None
     return next((doc for doc in case.documents
                  if doc.kind == "evidence" and doc.document_id == answers.evidence_document_id), None)
