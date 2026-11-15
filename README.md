@@ -2,7 +2,7 @@
 
 Ticky is a browser-based tool for reviewing U.S. parking tickets, camera citations, and other supported civil or traffic notices. It helps you check the details, organize evidence, and prepare an editable statement you can submit yourself.
 
-**[Try the live demo](https://responsible-punch-nutritional-determined.trycloudflare.com)** · Free to try · No account required · Synthetic documents only
+**[Try the live demo](https://denied-newton-give-club.trycloudflare.com)** · Free to try · No account required · Synthetic documents only
 
 Built by **ihatebusiness** for **Business Cup 2.0**.
 
