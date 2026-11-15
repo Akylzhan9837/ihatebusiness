@@ -122,7 +122,11 @@ async function remove() {
         </div>
       </details>
 
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <Transition name="page" mode="out-in">
+          <component :is="Component" :key="route.name" />
+        </Transition>
+      </router-view>
 
       <div class="case-foot">
         <ErrorNotice :error="deleteError" />

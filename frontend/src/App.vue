@@ -21,17 +21,33 @@ const isHome = computed(() => route.name === 'home')
       <router-link to="/new" class="btn sm">Check my ticket <span aria-hidden="true">↗</span></router-link>
     </nav>
   </header>
-  <main id="main" tabindex="-1" :class="{ wide: isHome }"><router-view /></main>
+  <main id="main" tabindex="-1" :class="{ wide: isHome }">
+    <router-view v-slot="{ Component }">
+      <Transition name="page" mode="out-in">
+        <component :is="Component" :key="route.params.id || route.matched[0]?.path" />
+      </Transition>
+    </router-view>
+  </main>
   <footer class="site-foot">
     <div class="foot-inner">
       <div>
-        <div class="brand">{{ BRAND }}</div>
-        <p class="foot-tag">Help with civil and traffic notices.</p>
+        <router-link to="/" class="brand">{{ BRAND }}</router-link>
+        <p class="foot-tag">Understand your ticket.<br />Prepare your next step.</p>
       </div>
-      <p class="foot-legal">
-        {{ BRAND }} is independent. It helps you organize your facts and prepare a statement for your own review.
-        Filing and deadlines are your responsibility. This demo accepts synthetic documents only.
-      </p>
+      <nav class="foot-links" aria-label="Explore Ticky">
+        <h2>Explore</h2>
+        <router-link to="/#how">How it works</router-link>
+        <router-link to="/#pricing">Pricing</router-link>
+        <router-link to="/new">Check my ticket</router-link>
+      </nav>
+      <div class="foot-note">
+        <h2>Your case, at your pace</h2>
+        <p>Save your private case link to return, add evidence, or edit your statement. You can delete your case and uploaded files from your case page.</p>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p class="foot-legal">{{ BRAND }} is an independent document preparation service. You review and submit your own appeal. Dismissal is not guaranteed.</p>
+      <span>Synthetic documents only · Demo access</span>
     </div>
   </footer>
 </template>
