@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [vue()],
+    base: env.VITE_BASE_PATH || '/',
     // Алиас @ нужен самому Vite (tsconfig paths его не настраивает).
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     server: {
