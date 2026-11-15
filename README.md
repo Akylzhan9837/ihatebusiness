@@ -1,8 +1,35 @@
 # Ticky
 
-Ticky helps users understand a U.S. civil or traffic notice and prepare a factual statement. The demo accepts synthetic documents.
+Ticky is a browser-based tool for reviewing U.S. parking tickets, camera citations, and other supported civil or traffic notices. It helps you check the details, organize evidence, and prepare an editable statement you can submit yourself.
 
-The public workflow starts with a state selection, then takes the user through ticket details, review, and an editable PDF draft. NYC Department of Finance code 38 with ParkNYC evidence also has a dedicated rules check. Other notices receive a factual statement and official resources for checking where and how to file.
+**[Try the live demo](https://responsible-punch-nutritional-determined.trycloudflare.com)** · Free to try · No account required · Synthetic documents only
+
+Built by **ihatebusiness** for **Business Cup 2.0**.
+
+## How it works
+
+1. Choose the state that issued the notice. Upload a PDF, JPG, or PNG, or enter the details manually.
+2. Review the fields Gemini extracted and confirm or correct them.
+3. Add your account of what happened and any relevant evidence. The app flags missing information and points to official resources.
+4. Generate an editable statement when the review is ready. Save your changes, download a PDF, or return to your case using its private link.
+
+### ParkNYC demo case
+
+The most detailed workflow covers NYC parking violation code 38 with a ParkNYC receipt. Ticky compares the confirmed license plate and parking session with the ticket and asks the user to confirm the zone. A mismatch is explained in the review and blocks the ParkNYC draft. For other supported notices, Ticky helps organize confirmed facts into a statement and provides official resources for finding filing instructions.
+
+The user reviews and files the statement. The demo uses synthetic documents and billing is disabled.
+
+## Team · ihatebusiness
+
+- Khafiz Akylzhna
+- Askar Miras
+- Bolat Ismail
+
+## Technical overview
+
+The frontend uses Vue, TypeScript, and Vite. The FastAPI backend stores cases in SQLite and uses Gemini for document extraction. Backend rules and templates build the review and statement from confirmed facts. Sources live in the [source registry](knowledge), and case access requires a secret. Users can delete their cases and uploaded files.
+
+See the [API contract](docs/api-contract.md) and [hackathon demo walkthrough](docs/demo-release.md).
 
 ## Local setup
 
@@ -26,4 +53,4 @@ npm run dev
 
 Open http://localhost:5173. Vite proxies API requests to port 8000. Manual entry works immediately. To enable automatic recognition, set `GEMINI_API_KEY` in the backend process environment and restart the backend. Keep the key on the server.
 
-The workflow and API are documented in [the API contract](docs/api-contract.md). The case data is stored in SQLite, and the source registry is in [knowledge](knowledge).
+To run the backend tests, use `./.venv/Scripts/python.exe -m pytest -q` from `backend`. To build the frontend for production, use `npm run build` from `frontend`.
