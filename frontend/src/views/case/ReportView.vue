@@ -6,7 +6,7 @@ import ErrorNotice from '@/components/ErrorNotice.vue'
 import QuestionField from '@/components/QuestionField.vue'
 import { useAnswersForm } from '@/composables/useAnswersForm'
 import { safeUrl } from '@/lib/clipboard'
-import { formatStamp } from '@/lib/format'
+import { formatDate, formatStamp } from '@/lib/format'
 import { describeFact } from '@/lib/validate'
 import { useCase } from '@/state/caseStore'
 
@@ -131,6 +131,36 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
         </div>
       </div>
 
+      <!-- offer -->
+      <div v-if="analysis.status === 'ready_for_draft' && analysis.draft_available" class="card offer">
+        <h2>{{ factual ? 'Factual statement draft' : 'Dispute draft' }}</h2>
+        <p class="muted small">Draft preparation is free in this demo.</p>
+        <ul class="plain checks">
+          <li>{{ factual ? 'Your confirmed details and your account of what happened' : 'An editable dispute draft and evidence checklist' }}</li>
+          <li>Official resources for checking how to file</li>
+          <li>Copy as text or download as PDF. You submit it yourself</li>
+        </ul>
+
+        <ErrorNotice :error="demoError" @retry="useDemo" />
+
+        <div v-if="draftCurrent" class="actions">
+          <button class="btn" type="button" @click="openDraft">Open your saved draft</button>
+          <span class="muted small">Saved {{ formatStamp(draft?.updated_at) }}</span>
+        </div>
+        <template v-else>
+          <p v-if="draft?.stale" class="small warnnote">Preparing a new draft replaces the previous text. Copy anything you want to keep first.</p>
+          <div class="actions">
+            <button class="btn dark" type="button" :disabled="c.offer.mode !== 'demo' || demoBusy" @click="useDemo">
+              {{ demoBusy ? 'Preparing your draft…' : 'Use demo access' }}
+            </button>
+          </div>
+          <p id="pay-note" class="small muted">
+            <template v-if="c.offer.mode === 'demo'">Demo access is separate from payment and is free. Nothing is charged.</template>
+            <template v-else>Demo access is unavailable right now, and payments are not enabled in this demo. Nothing is charged.</template>
+          </p>
+        </template>
+      </div>
+
       <!-- findings -->
       <div v-if="analysis.status !== 'unsupported' && analysis.status !== 'needs_information'" class="card">
         <h2>Findings</h2>
@@ -170,49 +200,19 @@ const openDraft = () => router.push({ name: 'draft', params: { id: store.caseId 
 
       <div v-if="analysis.sources.length" class="card">
         <h2>Official sources</h2>
-        <div v-for="group in sourceGroups" :key="group.title">
+        <div v-for="group in sourceGroups" :key="group.title" class="src-group" :class="group.title === 'Directories' ? 'directory' : 'instruction'">
           <h3>{{ group.title }}</h3>
           <p v-if="group.title === 'Directories'" class="muted small">Use these links to find the agency named on your notice.</p>
           <ul class="plain sources">
             <li v-for="s in group.sources" :key="s.id">
               <a :href="safeUrl(s.url)" target="_blank" rel="noopener noreferrer">{{ s.title }}</a>
-              <span class="muted small"> · {{ s.jurisdiction }} · {{ s.topic }} · checked {{ s.accessed_at }}</span>
+              <span class="muted small"> · {{ s.jurisdiction }} · {{ s.topic }} · checked {{ formatDate(s.accessed_at) }}</span>
               <blockquote v-if="s.relevant_excerpt">{{ s.relevant_excerpt }}</blockquote>
             </li>
           </ul>
         </div>
       </div>
 
-      <!-- offer -->
-      <div v-if="analysis.status === 'ready_for_draft' && analysis.draft_available" class="card offer">
-        <p class="eyebrow">Next step</p>
-        <h2>{{ factual ? 'Factual statement draft' : 'Dispute draft' }}</h2>
-        <p class="muted small">Draft preparation is free in this demo.</p>
-        <ul class="plain checks">
-          <li>{{ factual ? 'Your confirmed details and your account of what happened' : 'An editable dispute draft and evidence checklist' }}</li>
-          <li>Official resources for checking how to file</li>
-          <li>Copy as text or download as PDF. You submit it yourself</li>
-        </ul>
-
-        <ErrorNotice :error="demoError" @retry="useDemo" />
-
-        <div v-if="draftCurrent" class="row">
-          <button class="btn" type="button" @click="openDraft">Open your saved draft</button>
-          <span class="muted small">Saved {{ formatStamp(draft?.updated_at) }}</span>
-        </div>
-        <template v-else>
-          <p v-if="draft?.stale" class="small warnnote">Preparing a new draft replaces the previous text. Copy anything you want to keep first.</p>
-          <div class="row">
-            <button class="btn dark" type="button" :disabled="c.offer.mode !== 'demo' || demoBusy" @click="useDemo">
-              {{ demoBusy ? 'Preparing your draft…' : 'Use demo access' }}
-            </button>
-          </div>
-          <p id="pay-note" class="small muted">
-            <template v-if="c.offer.mode === 'demo'">Demo access is separate from payment and is free. Nothing is charged.</template>
-            <template v-else>Demo access is unavailable right now, and payments are not enabled in this demo. Nothing is charged.</template>
-          </p>
-        </template>
-      </div>
 
       <div class="row" style="margin-top:8px">
         <button class="btn secondary" type="button" :disabled="running" @click="run">Run the review again</button>

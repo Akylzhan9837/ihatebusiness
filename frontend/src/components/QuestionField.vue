@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { AnswerValue, Question } from '@/api/types'
+import DateTimeField from './DateTimeField.vue'
 import EvidenceField from './EvidenceField.vue'
 
 // Универсальный рендер вопроса по type: choice | text | datetime | boolean | evidence.
-const props = defineProps<{ question: Question; modelValue: AnswerValue; error?: string }>()
+const props = defineProps<{ question: Question; modelValue: AnswerValue; error?: string; labelHidden?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [v: AnswerValue] }>()
 
 const id = `q-${props.question.id}`
@@ -19,7 +20,7 @@ const val = (e: Event) => (e.target as HTMLInputElement).value
 <template>
   <div class="field" :class="{ bad: !!error }">
     <fieldset v-if="question.type === 'choice'" class="choice">
-      <legend :id="`${id}-label`">{{ question.prompt }}</legend>
+      <legend :id="`${id}-label`" :class="{ 'visually-hidden': labelHidden }">{{ question.prompt }}</legend>
       <label v-for="o in question.options" :key="o.value" class="opt">
         <input type="radio" :name="id" :value="o.value" :checked="modelValue === o.value"
           :aria-describedby="error ? `${id}-err` : undefined" @change="emit('update:modelValue', o.value)" />
@@ -34,16 +35,21 @@ const val = (e: Event) => (e.target as HTMLInputElement).value
     </label>
 
     <template v-else-if="question.type === 'evidence'">
-      <span :id="`${id}-label`" class="lbl">{{ question.prompt }}</span>
+      <span :id="`${id}-label`" class="lbl" :class="{ 'visually-hidden': labelHidden }">{{ question.prompt }}</span>
       <EvidenceField :model-value="typeof modelValue === 'string' ? modelValue : null" :input-id="id" :invalid="!!error"
+        @update:model-value="emit('update:modelValue', $event)" />
+    </template>
+
+    <template v-else-if="question.type === 'datetime'">
+      <span :id="`${id}-label`" class="lbl">{{ question.prompt }}</span>
+      <DateTimeField :model-value="typeof modelValue === 'string' ? modelValue : null" :input-id="id"
+        :invalid="!!error" :describedby="error ? `${id}-err` : undefined"
         @update:model-value="emit('update:modelValue', $event)" />
     </template>
 
     <template v-else>
       <label :for="id" class="lbl">{{ question.prompt }}</label>
-      <input v-if="question.type === 'datetime'" :id="id" type="datetime-local" :value="typeof modelValue === 'string' ? modelValue : ''"
-        :aria-invalid="!!error" :aria-describedby="error ? `${id}-err` : undefined" @input="emit('update:modelValue', val($event))" />
-      <input v-else :id="id" type="text" autocomplete="off" :value="typeof modelValue === 'string' ? modelValue : ''"
+      <input :id="id" type="text" autocomplete="off" :value="typeof modelValue === 'string' ? modelValue : ''"
         :maxlength="attrs.maxlength" :inputmode="attrs.inputmode" :autocapitalize="attrs.autocapitalize" :placeholder="attrs.placeholder"
         :aria-invalid="!!error" :aria-describedby="error ? `${id}-err` : undefined" @input="emit('update:modelValue', val($event))" />
     </template>

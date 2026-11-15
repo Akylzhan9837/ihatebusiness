@@ -1,19 +1,11 @@
 // Даты и время — строки, без new Date() для календарных значений (нет сдвига дня из-за часового пояса).
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// Везде показываем по-американски, независимо от локали устройства: 11/14/2026 и 1:20 PM.
+import { isoToUsDate, isoToUsTime } from '@/lib/usdate'
 
-export function formatDate(iso: string | null): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso ?? '')
-  return m ? `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}` : (iso ?? '—')
-}
+export const formatDate = (iso: string | null): string => (iso ? isoToUsDate(iso) : '—')
+export const formatTime = (t: string | null): string => (t ? isoToUsTime(t) : '—')
 
-export function formatTime(t: string | null): string {
-  const m = /^(\d{2}):(\d{2})$/.exec(t ?? '')
-  if (!m) return t ?? '—'
-  const h = Number(m[1])
-  return `${h % 12 || 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`
-}
-
-/** 'YYYY-MM-DDTHH:MM' (местное время NYC) → 'Nov 2, 2026, 1:30 PM' */
+/** 'YYYY-MM-DDTHH:MM' (местное время) → '11/14/2026, 1:20 PM' */
 export function formatLocalDateTime(v: string | null): string {
   const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(v ?? '')
   return m ? `${formatDate(m[1])}, ${formatTime(m[2])}` : (v ?? '—')
@@ -36,5 +28,5 @@ export function formatBytes(n: number): string {
 export function formatStamp(iso: string | null | undefined): string {
   if (!iso) return ''
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: 'numeric', minute: '2-digit', hour12: true })
 }

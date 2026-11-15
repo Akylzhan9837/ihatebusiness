@@ -45,7 +45,8 @@ async function onPick(e: Event) {
       <label v-for="d in evidence" :key="d.document_id" class="ev-item" :class="{ on: modelValue === d.document_id }">
         <input type="radio" :name="inputId" :value="d.document_id" :checked="modelValue === d.document_id" :disabled="busy"
           @change="emit('update:modelValue', d.document_id)" />
-        <span><strong>{{ d.filename }}</strong> <span class="muted small">· {{ formatBytes(d.size_bytes) }}</span></span>
+        <span><strong>{{ d.filename }}</strong> <span class="muted small">· {{ formatBytes(d.size_bytes) }}</span>
+          <span v-if="modelValue === d.document_id" class="badge ok">Selected</span></span>
       </label>
     </div>
 

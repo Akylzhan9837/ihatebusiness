@@ -105,8 +105,10 @@ onBeforeUnmount(() => { error.value = null })
 
 <template>
   <section>
-    <h1>Start a ticket review</h1>
-    <p class="muted">Choose the state where the notice was issued, then upload the ticket or enter its details.</p>
+    <header class="page-head">
+      <h1>Start a ticket review</h1>
+      <p class="lede">Choose the state where the notice was issued, then upload the ticket or enter its details.</p>
+    </header>
 
     <div class="tabs" role="group" aria-label="How to add the ticket">
       <button class="tab" type="button" :aria-pressed="mode === 'upload'" :disabled="busy" @click="mode = 'upload'">Upload a file</button>

@@ -1,3 +1,5 @@
+import { formatDate, formatLocalDateTime, formatTime } from '@/lib/format'
+import { dateError, timeError } from '@/lib/usdate'
 import type { AnswerKey, AnswerValue, CaseData, FieldKey, Question } from '@/api/types'
 
 export const FIELD_LABELS: Record<FieldKey, string> = {
@@ -40,12 +42,9 @@ export function isParkNYCCase(fields: Partial<CaseData['confirmed_fields']>): bo
 }
 
 const RX = {
-  date: /^\d{4}-\d{2}-\d{2}$/, time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
   amount: /^\d{1,6}(?:\.\d{1,2})?$/, plate: /^[A-Za-z0-9 -]{1,12}$/, state: /^[A-Za-z]{2}$/,
   zone: /^\d{6}$/, dateTime: /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/,
 }
-
-const validDate = (s: string) => { const d = new Date(`${s}T00:00:00Z`); return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(s) }
 
 export function validateField(key: FieldKey, raw: string): string {
   const v = raw.trim()
@@ -53,8 +52,8 @@ export function validateField(key: FieldKey, raw: string): string {
   switch (key) {
     case 'ticket_number':
     case 'violation_code': return v.length <= 64 ? '' : 'Too long (max 64 characters).'
-    case 'issue_date': return RX.date.test(v) && validDate(v) ? '' : 'Enter a valid date.'
-    case 'issue_time': return RX.time.test(v) ? '' : 'Enter the time as HH:MM.'
+    case 'issue_date': return dateError(v)
+    case 'issue_time': return timeError(v)
     case 'amount': return RX.amount.test(v) ? '' : 'Enter an amount like 65.00.'
     case 'plate_number': return RX.plate.test(v) && /[A-Za-z0-9]/.test(v) ? '' : 'Use letters, digits, spaces or dashes (max 12).'
     case 'plate_state': return RX.state.test(v) ? '' : 'Use a 2-letter state code, e.g. NY.'
@@ -70,22 +69,29 @@ export const ANSWER_LABELS: Record<AnswerKey, string> = {
   receipt_details_confirmed: 'Details checked against receipt',
 }
 
+export function validateDateTimeAnswer(id: string, value: string, all: Record<string, AnswerValue>): string {
+  if (value.includes('|')) {
+    const [date, time] = value.split('|')
+    return dateError(date || '') || timeError(time || '') || 'Enter a valid date and time.'
+  }
+  if (!RX.dateTime.test(value)) return 'Enter the date as MM/DD/YYYY and time with AM or PM.'
+  const start = String(all.session_start ?? '')
+  if (id === 'session_end' && RX.dateTime.test(start) && value <= start) {
+    return 'The session end must be after the session start.'
+  }
+  return ''
+}
+
 export function validateAnswer(q: Question, value: AnswerValue, all: Record<string, AnswerValue>): string {
   const empty = value === null || value === undefined || (typeof value === 'string' && !value.trim())
   if (q.type === 'boolean') return value === true ? '' : 'Please confirm to continue.'
+  if (q.type === 'datetime') return validateDateTimeAnswer(q.id, String(value ?? ''), all)
   if (empty) return 'This answer is required.'
   const v = String(value).trim()
   switch (q.id) {
     case 'session_zone': return RX.zone.test(v) ? '' : 'The ParkNYC zone is 6 digits.'
     case 'session_plate_state': return RX.state.test(v) ? '' : 'Use a 2-letter state code, e.g. NY.'
     case 'session_plate_number': return RX.plate.test(v) ? '' : 'Use letters, digits, spaces or dashes (max 12).'
-    case 'session_start':
-    case 'session_end': {
-      if (!RX.dateTime.test(v)) return 'Enter a valid date and time.'
-      const s = String(all.session_start ?? ''), e = String(all.session_end ?? '')
-      if (q.id === 'session_end' && RX.dateTime.test(s) && RX.dateTime.test(e) && e <= s) return 'The end must be after the start.'
-      return ''
-    }
   }
   if (q.type === 'choice' && q.options.length && !q.options.some((o) => o.value === v)) return 'Choose one of the options.'
   return ''
@@ -96,12 +102,12 @@ export function describeFact(id: string, c: CaseData): { label: string; value: s
   const [scope, key] = id.split('.')
   if (scope === 'confirmed_fields' && key in FIELD_LABELS) {
     const v = c.confirmed_fields[key as FieldKey]
-    return { label: FIELD_LABELS[key as FieldKey], value: v ?? 'not provided' }
+    return { label: FIELD_LABELS[key as FieldKey], value: v == null ? 'not provided' : key === 'issue_date' ? formatDate(v) : key === 'issue_time' ? formatTime(v) : v }
   }
   if (scope === 'answers' && key in ANSWER_LABELS) {
     const v = c.answers[key as AnswerKey]
     if (key === 'evidence_document_id') return { label: ANSWER_LABELS[key], value: c.documents.find((d) => d.document_id === v)?.filename ?? 'not provided' }
-    return { label: ANSWER_LABELS[key as AnswerKey], value: v === null ? 'not provided' : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v).replace('T', ' ') }
+    return { label: ANSWER_LABELS[key as AnswerKey], value: v === null ? 'not provided' : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : key === 'session_start' || key === 'session_end' ? formatLocalDateTime(v) : v }
   }
   return null
 }

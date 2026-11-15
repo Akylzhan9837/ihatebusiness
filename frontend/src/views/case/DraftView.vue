@@ -78,7 +78,10 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
 
 <template>
   <div>
-    <h1>{{ draft ? draftLabel : 'Your draft' }}</h1>
+    <header class="page-head">
+      <h1>{{ draft ? draftLabel : 'Your draft' }}</h1>
+      <p v-if="draft && !stale" class="lede">Check the statement for accuracy before you submit it yourself.</p>
+    </header>
 
     <div v-if="!draft" class="card">
       <h2>No draft yet</h2>
@@ -92,15 +95,18 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         but editing and PDF download are available only for an up-to-date draft.
         <div style="margin-top:8px"><router-link :to="{ name: 'report', params: { id: store.caseId } }" class="btn sm">Review again and prepare a new draft</router-link></div>
       </div>
-      <p v-else class="muted">Edit the text so it is accurate and in your own words. Review the filing instructions before you submit it yourself.</p>
 
-      <div class="card">
-        <label for="draft-text" class="lbl">{{ draftLabel }}</label>
-        <textarea id="draft-text" v-model="text" class="draft" rows="16" :readonly="stale" :aria-invalid="tooLong || empty"
+      <div class="card editor">
+        <label for="draft-text" class="lbl">Statement text</label>
+        <textarea id="draft-text" v-model="text" class="draft" rows="12" :readonly="stale" :aria-invalid="tooLong || empty"
           aria-describedby="draft-meta"></textarea>
-        <div id="draft-meta" class="src row" style="justify-content:space-between">
-          <span :class="{ err: tooLong }">{{ text.length }} / {{ LIMIT }}</span>
-          <span v-if="draft.updated_at">Saved {{ formatStamp(draft.updated_at) }}<template v-if="dirty"> · unsaved changes</template></span>
+        <div id="draft-meta" class="editor-meta">
+          <span>{{ text.length.toLocaleString('en-US') }} / {{ LIMIT.toLocaleString('en-US') }} characters</span>
+          <span class="save-state" :class="{ dirty }" role="status">
+            <template v-if="stale">Out of date</template>
+            <template v-else-if="dirty">Unsaved changes</template>
+            <template v-else>Saved <span class="muted">{{ formatStamp(draft.updated_at) }}</span></template>
+          </span>
         </div>
         <div v-if="tooLong" class="err" role="alert">The draft is too long. Keep it under {{ LIMIT }} characters.</div>
         <div v-else-if="empty && !stale" class="err" role="alert">The draft can't be empty.</div>
@@ -109,7 +115,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm('You have unsaved changes
         <ErrorNotice :error="exportError" @retry="download" />
         <p v-if="exportError" class="small muted">You can still copy the text and paste it where you file.</p>
 
-        <div class="row">
+        <div class="actions">
           <button class="btn" type="button" :disabled="stale || !dirty || saving || tooLong || empty" @click="save">{{ saving ? 'Saving…' : 'Save changes' }}</button>
           <button class="btn secondary" type="button" @click="copy">Copy text</button>
           <button class="btn secondary" type="button" :disabled="stale || exporting || tooLong || empty" @click="download">{{ exporting ? 'Preparing PDF…' : 'Download PDF' }}</button>

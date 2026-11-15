@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { getApi } from '@/api/client'
 import { FIELD_KEYS, type FieldKey } from '@/api/types'
 import ErrorNotice from '@/components/ErrorNotice.vue'
 import { CANONICAL_AUTHORITY, CANONICAL_CITY, isParkNYCCase, FIELD_LABELS, REQUIRED_FIELDS, normalizeExtracted, validateField } from '@/lib/validate'
+import { DATE_PLACEHOLDER, TIME_PLACEHOLDER, isoToUsDate, isoToUsTime, parseUsDate, parseUsTime } from '@/lib/usdate'
 import { STATES } from '@/lib/jurisdictions'
 import { useCase } from '@/state/caseStore'
 
@@ -17,17 +18,33 @@ const INPUT: Partial<Record<FieldKey, { type: string; inputmode?: 'numeric' | 'd
   ticket_number: { type: 'text', maxlength: 64 },
   violation_code: { type: 'text', maxlength: 64 },
   violation_description: { type: 'text', placeholder: 'e.g. No parking, speeding, red light' },
-  issue_date: { type: 'date' },
-  issue_time: { type: 'time' },
+  issue_date: { type: 'text', maxlength: 10, placeholder: DATE_PLACEHOLDER },
+  issue_time: { type: 'text', maxlength: 12, placeholder: TIME_PLACEHOLDER },
   amount: { type: 'text', inputmode: 'decimal', placeholder: '65.00' },
   plate_state: { type: 'text', maxlength: 2, placeholder: 'NY' },
   plate_number: { type: 'text', maxlength: 12 },
 }
 
 // Что уже подтверждено — берём его. Иначе подставляем распознанное значение (оно остаётся «непроверенным», пока пользователь не нажмёт Confirm).
+function displayField(key: FieldKey, value: string | null): string {
+  const normalized = normalizeExtracted(key, value)
+  if (key === 'issue_date') return isoToUsDate(normalized)
+  if (key === 'issue_time') return isoToUsTime(normalized)
+  return normalized
+}
+
+function fieldForApi(key: FieldKey, input: string): string | null {
+  const value = input.trim()
+  if (!value) return null
+  if (key === 'issue_date') return parseUsDate(value)
+  if (key === 'issue_time') return parseUsTime(value)
+  if (key === 'plate_state' || key === 'plate_number') return value.toUpperCase()
+  return value
+}
+
 const values = reactive<Record<FieldKey, string>>(Object.fromEntries(FIELD_KEYS.map((k) => {
   const confirmed = c.value.confirmed_fields[k]
-  return [k, pending?.fields[k] ?? (confirmed != null ? confirmed : normalizeExtracted(k, c.value.extraction?.fields[k]?.value ?? null))]
+  return [k, pending?.fields[k] ?? (displayField(k, confirmed ?? c.value.extraction?.fields[k]?.value ?? null))]
 })) as Record<FieldKey, string>)
 const wasConfirmed = (k: FieldKey) => c.value.confirmed_fields[k] != null
 const extracted = (k: FieldKey) => c.value.extraction?.fields[k]
@@ -62,7 +79,7 @@ async function retryRead() {
   reading.value = true; readError.value = null
   try { await (await getApi()).extract(store.caseId); await store.refresh()
     // Подставляем только в пустые поля, чтобы не затирать ввод пользователя.
-    for (const k of FIELD_KEYS) if (!values[k]) values[k] = normalizeExtracted(k, c.value.extraction?.fields[k]?.value ?? null)
+    for (const k of FIELD_KEYS) if (!values[k]) values[k] = displayField(k, c.value.extraction?.fields[k]?.value ?? null)
   } catch (e) { readError.value = e } finally { reading.value = false }
 }
 
@@ -78,11 +95,16 @@ function validateAll(): boolean {
 
 async function confirm() {
   error.value = null
-  if (!validateAll()) return
+  if (!validateAll()) {
+    const first = FIELD_KEYS.find((key) => !!errors[key])
+    await nextTick()
+    if (first) document.getElementById('f-' + first)?.focus()
+    return
+  }
   saving.value = true
   try {
     const patch: Partial<Record<FieldKey, string | null>> = {}
-    for (const k of FIELD_KEYS) patch[k] = values[k].trim() === '' ? null : (k === 'plate_state' || k === 'plate_number' ? values[k].trim().toUpperCase() : values[k].trim())
+    for (const k of FIELD_KEYS) patch[k] = fieldForApi(k, values[k])
     if (usesParkNYC.value) {
       patch.city = CANONICAL_CITY
       patch.issuing_authority = CANONICAL_AUTHORITY
@@ -96,8 +118,10 @@ async function confirm() {
 
 <template>
   <div>
-    <h1>Check the ticket details</h1>
-    <p class="muted">Compare these details with your notice before continuing.</p>
+    <header class="page-head">
+      <h1>Check the ticket details</h1>
+      <p class="lede">Compare these details with your notice before continuing.</p>
+    </header>
 
     <p v-if="c.draft && !c.draft.stale" class="notice info">Changes to confirmed ticket details may require a new draft.</p>
 
@@ -149,6 +173,8 @@ async function confirm() {
           :required="REQUIRED_FIELDS.includes(k)" :aria-invalid="!!errors[k]"
           :aria-describedby="[errors[k] ? `e-${k}` : '', extracted(k)?.source_text ? `s-${k}` : ''].filter(Boolean).join(' ') || undefined"
           @input="touched[k] = true; errors[k] = ''" />
+        <p v-if="k === 'issue_date'" class="hint">Use MM/DD/YYYY, for example 11/14/2026.</p>
+        <p v-if="k === 'issue_time'" class="hint">Use the local time on the notice with AM or PM, for example 1:30 PM.</p>
         <div v-if="extracted(k)?.source_text" :id="`s-${k}`" class="src">
           From your document: “{{ extracted(k)?.source_text }}”<span v-if="extracted(k)?.page"> (page {{ extracted(k)?.page }})</span>
         </div>
@@ -160,7 +186,7 @@ async function confirm() {
         <label for="ticket-statement">What happened, and what should the authority review?</label>
         <textarea id="ticket-statement" v-model="circumstances" rows="4" maxlength="4000"></textarea>
       </div>
-      <div class="row">
+      <div class="actions">
         <button class="btn" type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Confirm details and continue' }}</button>
       </div>
     </form>
