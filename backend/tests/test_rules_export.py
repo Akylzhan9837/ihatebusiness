@@ -1,9 +1,10 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import uuid4
 
 from app.export import render_pdf
-from app.models import Answers, Document, Draft, SubmissionStep, TicketFields
+from app.models import Answers, Case, Document, Draft, Offer, SubmissionStep, TicketFields
 from app.rules import evaluate
+from app.services.analysis import matching_receipt
 
 
 def sample():
@@ -123,3 +124,31 @@ def test_five_minute_grace_is_included_but_six_minutes_is_not():
     assert evaluate(fields, answers, docs).status == "ready_for_draft"
     fields.issue_time = "13:24"
     assert evaluate(fields, answers, docs).status == "no_supported_ground_identified"
+
+def test_draft_readiness_receipt_check_uses_the_same_five_minute_grace():
+    fields, answers, docs = sample()
+    answers.session_start = "2026-11-02T13:30"
+    answers.session_end = "2026-11-02T14:30"
+
+    case = Case(
+        case_id=uuid4(),
+        documents=docs,
+        confirmed_fields=fields,
+        answers=answers,
+        offer=Offer(mode="demo"),
+        created_at=datetime(2026, 11, 2, 12, 0),
+        updated_at=datetime(2026, 11, 2, 12, 0),
+    )
+
+    fields.issue_time = "13:25"
+    assert matching_receipt(case) is docs[0]
+
+    fields.issue_time = "14:35"
+    assert matching_receipt(case) is docs[0]
+
+    fields.issue_time = "13:24"
+    assert matching_receipt(case) is None
+
+    fields.issue_time = "14:36"
+    assert matching_receipt(case) is None
+
