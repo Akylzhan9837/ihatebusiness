@@ -2,7 +2,7 @@
 
 Ticky is a browser-based tool for reviewing U.S. parking tickets, camera citations, and other supported civil or traffic notices. It helps you check the details, organize evidence, and prepare an editable statement you can submit yourself.
 
-**[Try the live demo](https://denied-newton-give-club.trycloudflare.com)** · Free to try · No account required · Synthetic documents only
+**[Try the live demo](https://akylzhan9837.github.io/ihatebusiness/)** · Free to try · No account required · Synthetic documents only
 
 [GitHub Pages frontend](https://akylzhan9837.github.io/ihatebusiness/) uses the live FastAPI API configured in the repository's `TICKY_API_BASE_URL` Actions variable. When changing the API host, update that variable and rerun the Pages workflow. Set `TICKETCLEAR_CORS_ORIGINS=https://akylzhan9837.github.io` on the backend for the Pages origin.
 
